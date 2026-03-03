@@ -17,6 +17,7 @@ export default function CompanyAddTrip() {
   // Dropdown data
   const [ships, setShips] = useState([]);
   const [ports, setPorts] = useState([]);
+  const [trips, setTrips] = useState([]);
   const [loadingData, setLoadingData] = useState(false);
 
   // Tab states (main tabs and inner availability tabs)
@@ -43,19 +44,20 @@ export default function CompanyAddTrip() {
 
   // Availability lines
   const [passengers, setPassengers] = useState([
-    { id: makeId("p_"), cabin: "First class", seats: "" }
+    { id: makeId("p_"), trip: "", cabin: "First class", seats: "" }
   ]);
   const [cargo, setCargo] = useState([
-    { id: makeId("c_"), type: "Pallet", spots: "" }
+    { id: makeId("c_"), trip: "", type: "Pallet", spots: "" }
   ]);
   const [vehicles, setVehicles] = useState([
-    { id: makeId("v_"), type: "Car", spots: "" }
+    { id: makeId("v_"), trip: "", type: "Car", spots: "" }
   ]);
 
   // Agents allocation blocks (each has passengerLines, cargoLines, vehicleLines)
   const [agents, setAgents] = useState([
     {
       id: makeId("a_"),
+      trip: "",
       agentName: "Agent Alpha",
       passengerLines: [{ id: makeId("ap_"), select: "", qty: "" }],
       cargoLines: [{ id: makeId("ac_"), select: "", qty: "" }],
@@ -65,7 +67,7 @@ export default function CompanyAddTrip() {
 
   // Ticketing rules
   const [tripRules, setTripRules] = useState([
-    { id: makeId("r_"), ruleType: "Void", ruleName: "" }
+    { id: makeId("r_"), trip: "", ruleType: "Void", ruleName: "" }
   ]);
 
   // Fetch ships and ports on mount
@@ -77,8 +79,8 @@ export default function CompanyAddTrip() {
     try {
       setLoadingData(true);
       
-      // Fetch ships and ports in parallel
-      const [shipsRes, portsRes] = await Promise.all([
+      // Fetch ships, ports, and trips in parallel
+      const [shipsRes, portsRes, tripsRes] = await Promise.all([
         shipsApi.getShips(1, 100, "").catch(err => {
           console.error("[v0] Error fetching ships:", err);
           return { data: { ships: [] } };
@@ -86,18 +88,36 @@ export default function CompanyAddTrip() {
         portsApi.getPorts(1, 100, "").catch(err => {
           console.error("[v0] Error fetching ports:", err);
           return { data: { ports: [] } };
+        }),
+        tripsApi.getTrips(1, 100, "").catch(err => {
+          console.error("[v0] Error fetching trips:", err);
+          return { data: { trips: [] } };
         })
       ]);
 
       // Extract data from responses
       const shipsList = shipsRes?.data?.ships || [];
       const portsList = portsRes?.data?.ports || [];
+      const tripsList = tripsRes?.data?.trips || [];
 
       console.log("[v0] Ships loaded:", shipsList);
       console.log("[v0] Ports loaded:", portsList);
+      console.log("[v0] Trips loaded:", tripsList);
 
       setShips(shipsList);
       setPorts(portsList);
+      setTrips(tripsList);
+    } catch (err) {
+      console.error("[v0] Error fetching dropdown data:", err);
+      Swal.fire({
+        icon: "warning",
+        title: "Warning",
+        text: "Could not load ships, ports and trips data. Using empty lists."
+      });
+    } finally {
+      setLoadingData(false);
+    }
+  };
     } catch (err) {
       console.error("[v0] Error fetching dropdown data:", err);
       Swal.fire({
@@ -453,6 +473,21 @@ export default function CompanyAddTrip() {
 
                       {/* Add Availability Content */}
                       <div id="addAvailabilityContent" className={availInnerTab === "add" ? "" : "hidden"}>
+                        <div className="row mb-3">
+                          <div className="col-md-6">
+                            <label className="form-label">Select Trip</label>
+                            <select className="form-select" value={form.trip || ""} onChange={(e) => setForm({ ...form, trip: e.target.value })}>
+                              <option value="">-- Select a Trip --</option>
+                              {trips.map((trip) => (
+                                <option key={trip._id} value={trip._id}>
+                                  {trip.tripCode} ({trip.departurePort?.name} → {trip.arrivalPort?.name})
+                                </option>
+                              ))}
+                            </select>
+                            {loadingData && <small className="text-muted">Loading trips...</small>}
+                          </div>
+                        </div>
+
                         <h5 className="mb-3">Passenger Availability</h5>
                         <div id="passenger-availability-container">
                           {passengers.map((p) => (
@@ -505,6 +540,21 @@ export default function CompanyAddTrip() {
 
                       {/* Allocate to Agent */}
                       <div id="allocateAvailabilityContent" className={availInnerTab === "allocate" ? "" : "hidden"}>
+                        <div className="row mb-3">
+                          <div className="col-md-6">
+                            <label className="form-label">Select Trip for Allocation</label>
+                            <select className="form-select" value={form.trip || ""} onChange={(e) => setForm({ ...form, trip: e.target.value })}>
+                              <option value="">-- Select a Trip --</option>
+                              {trips.map((trip) => (
+                                <option key={trip._id} value={trip._id}>
+                                  {trip.tripCode} ({trip.departurePort?.name} → {trip.arrivalPort?.name})
+                                </option>
+                              ))}
+                            </select>
+                            {loadingData && <small className="text-muted">Loading trips...</small>}
+                          </div>
+                        </div>
+
                         <h5 className="mb-3">Total Availability for Allocation</h5>
                         <div id="allocation-summary" className="mb-3">First class: 0 | Pallet: 0 | Car: 0</div>
 
@@ -582,6 +632,21 @@ export default function CompanyAddTrip() {
 
                     {/* Trip Ticketing Rules */}
                     <div id="tripTicketingRulesTab" className={mainTab === "ticketing" ? "" : "hidden"}>
+                      <div className="row mb-3">
+                        <div className="col-md-6">
+                          <label className="form-label">Select Trip for Rules</label>
+                          <select className="form-select" value={form.trip || ""} onChange={(e) => setForm({ ...form, trip: e.target.value })}>
+                            <option value="">-- Select a Trip --</option>
+                            {trips.map((trip) => (
+                              <option key={trip._id} value={trip._id}>
+                                {trip.tripCode} ({trip.departurePort?.name} → {trip.arrivalPort?.name})
+                              </option>
+                            ))}
+                          </select>
+                          {loadingData && <small className="text-muted">Loading trips...</small>}
+                        </div>
+                      </div>
+
                       <h5 className="mb-3">Trip Ticketing Rules</h5>
 
                       <div id="trip-rules-container">
