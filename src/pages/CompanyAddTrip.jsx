@@ -19,6 +19,11 @@ export default function CompanyAddTrip() {
   const [ports, setPorts] = useState([]);
   const [trips, setTrips] = useState([]);
   const [loadingData, setLoadingData] = useState(false);
+  const [selectedTripCapacity, setSelectedTripCapacity] = useState({
+    passenger: [],
+    cargo: [],
+    vehicle: []
+  });
 
   // Tab states (main tabs and inner availability tabs)
   const [mainTab, setMainTab] = useState("details"); // details | availability | ticketing
@@ -116,6 +121,30 @@ export default function CompanyAddTrip() {
       });
     } finally {
       setLoadingData(false);
+    }
+  };
+
+  // Handler for trip selection to load capacity details
+  const handleTripSelection = (tripId) => {
+    setForm({ ...form, trip: tripId });
+    
+    if (tripId) {
+      // Find the selected trip from the trips array
+      const selectedTrip = trips.find(t => t._id === tripId);
+      
+      if (selectedTrip && selectedTrip.tripCapacityDetails) {
+        console.log("[v0] Selected trip capacity:", selectedTrip.tripCapacityDetails);
+        setSelectedTripCapacity({
+          passenger: selectedTrip.tripCapacityDetails.passenger || [],
+          cargo: selectedTrip.tripCapacityDetails.cargo || [],
+          vehicle: selectedTrip.tripCapacityDetails.vehicle || []
+        });
+      } else {
+        console.log("[v0] No capacity details found for trip");
+        setSelectedTripCapacity({ passenger: [], cargo: [], vehicle: [] });
+      }
+    } else {
+      setSelectedTripCapacity({ passenger: [], cargo: [], vehicle: [] });
     }
   };
 
@@ -465,7 +494,7 @@ export default function CompanyAddTrip() {
                         <div className="row mb-3">
                           <div className="col-md-6">
                             <label className="form-label">Select Trip</label>
-                            <select className="form-select" value={form.trip || ""} onChange={(e) => setForm({ ...form, trip: e.target.value })}>
+                            <select className="form-select" value={form.trip || ""} onChange={(e) => handleTripSelection(e.target.value)}>
                               <option value="">-- Select a Trip --</option>
                               {trips.map((trip) => (
                                 <option key={trip._id} value={trip._id}>
@@ -482,8 +511,12 @@ export default function CompanyAddTrip() {
                           {passengers.map((p) => (
                             <div className="capacity-grid align-items-center mb-2" key={p.id}>
                               <select className="form-select" value={p.cabin} onChange={(e) => updatePassenger(p.id, "cabin", e.target.value)}>
-                                <option>First class</option>
-                                <option>Economy</option>
+                                <option value="">-- Select Cabin --</option>
+                                {selectedTripCapacity.passenger.map((pc) => (
+                                  <option key={pc.cabinId} value={pc.cabinName}>
+                                    {pc.cabinName} (Total: {pc.totalSeat}, Remaining: {pc.remainingSeat})
+                                  </option>
+                                ))}
                               </select>
                               <input type="number" className="form-control" placeholder="Seats" value={p.seats} onChange={(e) => updatePassenger(p.id, "seats", e.target.value)} />
                               <button type="button" className="btn btn-sm btn-danger remove-btn" onClick={() => removePassenger(p.id)}>Remove</button>
@@ -497,8 +530,12 @@ export default function CompanyAddTrip() {
                           {cargo.map((c) => (
                             <div className="capacity-grid align-items-center mb-2" key={c.id}>
                               <select className="form-select" value={c.type} onChange={(e) => updateCargo(c.id, "type", e.target.value)}>
-                                <option>Pallet</option>
-                                <option>Container</option>
+                                <option value="">-- Select Hold --</option>
+                                {selectedTripCapacity.cargo.map((cc) => (
+                                  <option key={cc.cabinId} value={cc.cabinName}>
+                                    {cc.cabinName} (Total: {cc.totalSeat}, Remaining: {cc.remainingSeat})
+                                  </option>
+                                ))}
                               </select>
                               <input type="number" className="form-control" placeholder="Spots" value={c.spots} onChange={(e) => updateCargo(c.id, "spots", e.target.value)} />
                               <button type="button" className="btn btn-sm btn-danger remove-btn" onClick={() => removeCargo(c.id)}>Remove</button>
@@ -512,8 +549,12 @@ export default function CompanyAddTrip() {
                           {vehicles.map((v) => (
                             <div className="capacity-grid align-items-center mb-2" key={v.id}>
                               <select className="form-select" value={v.type} onChange={(e) => updateVehicle(v.id, "type", e.target.value)}>
-                                <option>Car</option>
-                                <option>Truck</option>
+                                <option value="">-- Select Vehicle Type --</option>
+                                {selectedTripCapacity.vehicle.map((vc) => (
+                                  <option key={vc.cabinId} value={vc.cabinName}>
+                                    {vc.cabinName} (Total: {vc.totalSeat}, Remaining: {vc.remainingSeat})
+                                  </option>
+                                ))}
                               </select>
                               <input type="number" className="form-control" placeholder="Spots" value={v.spots} onChange={(e) => updateVehicle(v.id, "spots", e.target.value)} />
                               <button type="button" className="btn btn-sm btn-danger remove-btn" onClick={() => removeVehicle(v.id)}>Remove</button>
@@ -532,7 +573,7 @@ export default function CompanyAddTrip() {
                         <div className="row mb-3">
                           <div className="col-md-6">
                             <label className="form-label">Select Trip for Allocation</label>
-                            <select className="form-select" value={form.trip || ""} onChange={(e) => setForm({ ...form, trip: e.target.value })}>
+                            <select className="form-select" value={form.trip || ""} onChange={(e) => handleTripSelection(e.target.value)}>
                               <option value="">-- Select a Trip --</option>
                               {trips.map((trip) => (
                                 <option key={trip._id} value={trip._id}>
@@ -624,7 +665,7 @@ export default function CompanyAddTrip() {
                       <div className="row mb-3">
                         <div className="col-md-6">
                           <label className="form-label">Select Trip for Rules</label>
-                          <select className="form-select" value={form.trip || ""} onChange={(e) => setForm({ ...form, trip: e.target.value })}>
+                          <select className="form-select" value={form.trip || ""} onChange={(e) => handleTripSelection(e.target.value)}>
                             <option value="">-- Select a Trip --</option>
                             {trips.map((trip) => (
                               <option key={trip._id} value={trip._id}>
