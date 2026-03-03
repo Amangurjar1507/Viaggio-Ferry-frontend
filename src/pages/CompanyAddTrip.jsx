@@ -118,16 +118,6 @@ export default function CompanyAddTrip() {
       setLoadingData(false);
     }
   };
-    } catch (err) {
-      console.error("[v0] Error fetching dropdown data:", err);
-      Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: "Could not load ships and ports data. Using empty lists."
-      });
-    } finally {
-      setLoadingData(false);
-    }
   };
 
   // Handlers for form changes

@@ -111,9 +111,6 @@ export default function TripsListTable() {
                       ))
                     )}
                   </tbody>
-                      </tr>
-                    ))}
-                  </tbody>
                 </table>
               </div>
             </div>
