@@ -1,10 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { shipsApi } from "../../api/shipsApi";
+import { portsApi } from "../../api/portsApi";
+import Swal from "sweetalert2";
 
 const makeId = () => Date.now() + Math.random();
 
 export default function AddTripForm() {
   // Tab control
   const [activeTab, setActiveTab] = useState("details"); // details | availability | ticketing
+
+  // Dropdown data
+  const [ships, setShips] = useState([]);
+  const [ports, setPorts] = useState([]);
+  const [loadingData, setLoadingData] = useState(false);
 
   // Main trip fields
   const [form, setForm] = useState({
@@ -40,6 +48,48 @@ export default function AddTripForm() {
 
   // trip rules
   const [tripRules, setTripRules] = useState([{ id: makeId(), ruleType: "Void", ruleName: "" }]);
+
+  // Fetch ships and ports on mount
+  useEffect(() => {
+    fetchDropdownData();
+  }, []);
+
+  const fetchDropdownData = async () => {
+    try {
+      setLoadingData(true);
+      
+      // Fetch ships and ports in parallel
+      const [shipsRes, portsRes] = await Promise.all([
+        shipsApi.getShips(1, 100, "").catch(err => {
+          console.error("[v0] Error fetching ships:", err);
+          return { data: { ships: [] } };
+        }),
+        portsApi.getPorts(1, 100, "").catch(err => {
+          console.error("[v0] Error fetching ports:", err);
+          return { data: { ports: [] } };
+        })
+      ]);
+
+      // Extract data from responses
+      const shipsList = shipsRes?.data?.ships || [];
+      const portsList = portsRes?.data?.ports || [];
+
+      console.log("[v0] Ships loaded:", shipsList);
+      console.log("[v0] Ports loaded:", portsList);
+
+      setShips(shipsList);
+      setPorts(portsList);
+    } catch (err) {
+      console.error("[v0] Error fetching dropdown data:", err);
+      Swal.fire({
+        icon: "warning",
+        title: "Warning",
+        text: "Could not load ships and ports data. Using empty lists."
+      });
+    } finally {
+      setLoadingData(false);
+    }
+  };
 
   // handlers for main form
   const onChange = (e) => setForm(s => ({ ...s, [e.target.name]: e.target.value }));
@@ -124,25 +174,40 @@ export default function AddTripForm() {
             </div>
             <div className="col-md-6">
               <label className="form-label">Assign Vessel</label>
-              <select name="vessel" value={form.vessel} onChange={onChange} className="form-select">
-                <option value="">Example Ship 1</option>
-                <option value="ship2">Example Ship 2</option>
+              <select name="vessel" value={form.vessel} onChange={onChange} className="form-select" disabled={loadingData}>
+                <option value="">-- Select a Ship --</option>
+                {ships.map((ship) => (
+                  <option key={ship._id} value={ship._id}>
+                    {ship.name}
+                  </option>
+                ))}
               </select>
+              {loadingData && <small className="text-muted">Loading ships...</small>}
             </div>
 
             <div className="col-md-6">
               <label className="form-label">Departure Port</label>
-              <select name="departurePort" value={form.departurePort} onChange={onChange} className="form-select">
-                <option value="dubai">Dubai</option>
-                <option value="muscat">Muscat</option>
+              <select name="departurePort" value={form.departurePort} onChange={onChange} className="form-select" disabled={loadingData}>
+                <option value="">-- Select a Port --</option>
+                {ports.map((port) => (
+                  <option key={port._id} value={port._id}>
+                    {port.name}
+                  </option>
+                ))}
               </select>
+              {loadingData && <small className="text-muted">Loading ports...</small>}
             </div>
             <div className="col-md-6">
               <label className="form-label">Arrival Port</label>
-              <select name="arrivalPort" value={form.arrivalPort} onChange={onChange} className="form-select">
-                <option value="muscat">Muscat</option>
-                <option value="dubai">Dubai</option>
+              <select name="arrivalPort" value={form.arrivalPort} onChange={onChange} className="form-select" disabled={loadingData}>
+                <option value="">-- Select a Port --</option>
+                {ports.map((port) => (
+                  <option key={port._id} value={port._id}>
+                    {port.name}
+                  </option>
+                ))}
               </select>
+              {loadingData && <small className="text-muted">Loading ports...</small>}
             </div>
 
             <div className="col-md-6">
