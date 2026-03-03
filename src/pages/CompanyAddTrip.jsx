@@ -118,7 +118,6 @@ export default function CompanyAddTrip() {
       setLoadingData(false);
     }
   };
-  };
 
   // Handlers for form changes
   const onFormChange = (e) => {
