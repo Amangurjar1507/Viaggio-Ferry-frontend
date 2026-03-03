@@ -6,6 +6,7 @@ import { PageWrapper } from "../components/layout/PageWrapper";
 import { useNavigate } from "react-router-dom";
 import { shipsApi } from "../api/shipsApi";
 import { portsApi } from "../api/portsApi";
+import { tripsApi } from "../api/tripsApi";
 import Swal from "sweetalert2";
 
 const makeId = (prefix = "") => `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2,8)}`;
@@ -176,12 +177,72 @@ export default function CompanyAddTrip() {
   const updateTripRule = (id, key, value) => setTripRules((r) => r.map((x) => (x.id === id ? { ...x, [key]: value } : x)));
 
   // Save handlers (currently mock)
-  const onSaveTrip = (e) => {
+  const onSaveTrip = async (e) => {
     e.preventDefault();
-    const payload = { form, passengers, cargo, vehicles, agents, tripRules };
-    console.log("Save Trip payload:", payload);
-    alert("Trip saved (mock). Check console.");
-    // optionally navigate back: navigate('/company/ship-trip/trips');
+    
+    // Validate required fields
+    if (!form.code || !form.vessel || !form.departurePort || !form.arrivalPort || !form.departureAt || !form.arrivalAt) {
+      Swal.fire({
+        icon: "warning",
+        title: "Validation Error",
+        text: "Please fill in all required fields (Trip Code, Vessel, Departure Port, Arrival Port, Departure Date/Time, Arrival Date/Time)"
+      });
+      return;
+    }
+
+    try {
+      // Show loading
+      Swal.fire({
+        title: "Creating Trip",
+        text: "Please wait...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Prepare API payload matching the backend requirements
+      const payload = {
+        tripName: form.code, // Use trip code as name if tripName not in form
+        tripCode: form.code,
+        ship: form.vessel, // Ship ID
+        departurePort: form.departurePort, // Port ID
+        arrivalPort: form.arrivalPort, // Port ID
+        departureDateTime: form.departureAt,
+        arrivalDateTime: form.arrivalAt,
+        status: form.status || "SCHEDULED",
+        bookingOpeningDate: form.bookingOpen || null,
+        bookingClosingDate: form.bookingClose || null,
+        checkInOpeningDate: form.checkinOpen || null,
+        checkInClosingDate: form.checkinClose || null,
+        boardingClosingDate: form.boardingClose || null
+      };
+
+      console.log("[v0] Trip API payload:", payload);
+
+      // Call the API
+      const response = await tripsApi.createTrip(payload);
+      
+      console.log("[v0] Trip created successfully:", response);
+
+      // Show success message
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Trip created successfully!",
+        confirmButtonText: "OK"
+      }).then(() => {
+        // Optionally navigate back to trips list
+        navigate('/company/ship-trip/trips');
+      });
+    } catch (error) {
+      console.error("[v0] Error creating trip:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message || "Failed to create trip. Please try again."
+      });
+    }
   };
 
   const onSaveAvailability = () => {
