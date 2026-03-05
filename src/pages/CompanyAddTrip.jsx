@@ -1048,7 +1048,8 @@ export default function CompanyAddTrip() {
                       </div>
 
                       {/* Allocate to Agent */}
-                      <div id="allocateAvailabilityContent" className={availInnerTab === "allocate" ? "" : "hidden"}>
+                      {availInnerTab === "allocate" && (
+                      <div id="allocateAvailabilityContent">
                         <div className="row mb-3">
                           <div className="col-md-6">
                             <label className="form-label">Select Trip for Allocation</label>
@@ -1190,6 +1191,7 @@ export default function CompanyAddTrip() {
                           <button type="button" className="btn btn-success" onClick={onSaveAgentAllocations}>Save Allocation</button>
                         </div>
                       </div>
+                      )}
                     </div>
 
                     {/* Trip Ticketing Rules */}
