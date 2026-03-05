@@ -1006,13 +1006,13 @@ export default function CompanyEditTrip() {
 
                     {/* Allocate to Agent */}
                     {availInnerTab === "allocate" && (
-                      <div>
+                      <div id="allocateAvailabilityContent">
                         <div className="row mb-3">
                           <div className="col-md-6">
                             <label className="form-label">Select Availability for Allocation</label>
-                            <select 
-                              className="form-select" 
-                              value={selectedAvailabilityId} 
+                            <select
+                              className="form-select"
+                              value={selectedAvailabilityId}
                               onChange={(e) => {
                                 setSelectedAvailabilityId(e.target.value);
                               }}
@@ -1024,7 +1024,7 @@ export default function CompanyEditTrip() {
                                 </option>
                               ))}
                             </select>
-                            {loadingAllocations && <small className="text-muted">Loading agents...</small>}
+                            {loadingAllocations && <small className="text-muted">Loading allocations...</small>}
                           </div>
                         </div>
 
@@ -1033,68 +1033,98 @@ export default function CompanyEditTrip() {
                             agentAllocations.map((allocation) => (
                               <div className="agent-block" key={allocation._id}>
                                 <div className="d-flex justify-content-between align-items-center mb-3">
-                                  <h6>{allocation.agent?.name || 'Agent Details'}</h6>
+                                  <h6>Agent: {allocation.agent?.name || "Unknown"}</h6>
                                 </div>
 
                                 {/* Passenger Allocation */}
-                                {allocation.allocations && allocation.allocations.find(a => a.type === 'passenger') && (
+                                {allocation.allocations && allocation.allocations.find((a) => a.type === "passenger") && (
                                   <div className="allocation-section">
                                     <h6>Passenger Allocation</h6>
                                     <div className="passenger-lines">
-                                      {allocation.allocations.find(a => a.type === 'passenger').cabins?.map((cabin, idx) => (
-                                        <div className="mb-3" key={idx}>
-                                          <div className="capacity-grid align-items-center">
-                                            <div className="form-control" style={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
-                                              {cabin.cabin}
-                                            </div>
-                                            <div className="form-control" style={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
-                                              {cabin.allocatedSeats}
+                                      {allocation.allocations
+                                        .find((a) => a.type === "passenger")
+                                        .cabins?.map((item, idx) => (
+                                          <div className="mb-3" key={idx}>
+                                            <div className="capacity-grid align-items-center">
+                                              <input
+                                                type="text"
+                                                className="form-control"
+                                                value={item.cabin?.name || item.cabin || ""}
+                                                disabled
+                                                readOnly
+                                              />
+                                              <input
+                                                type="text"
+                                                className="form-control"
+                                                value={item.allocatedSeats || ""}
+                                                disabled
+                                                readOnly
+                                              />
                                             </div>
                                           </div>
-                                        </div>
-                                      ))}
+                                        ))}
                                     </div>
                                   </div>
                                 )}
 
                                 {/* Cargo Allocation */}
-                                {allocation.allocations && allocation.allocations.find(a => a.type === 'cargo') && (
+                                {allocation.allocations && allocation.allocations.find((a) => a.type === "cargo") && (
                                   <div className="allocation-section">
                                     <h6>Cargo Allocation</h6>
                                     <div className="cargo-lines">
-                                      {allocation.allocations.find(a => a.type === 'cargo').cabins?.map((cabin, idx) => (
-                                        <div className="mb-3" key={idx}>
-                                          <div className="capacity-grid align-items-center">
-                                            <div className="form-control" style={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
-                                              {cabin.cabin}
-                                            </div>
-                                            <div className="form-control" style={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
-                                              {cabin.allocatedSeats}
+                                      {allocation.allocations
+                                        .find((a) => a.type === "cargo")
+                                        .cabins?.map((item, idx) => (
+                                          <div className="mb-3" key={idx}>
+                                            <div className="capacity-grid align-items-center">
+                                              <input
+                                                type="text"
+                                                className="form-control"
+                                                value={item.cabin?.name || item.cabin || ""}
+                                                disabled
+                                                readOnly
+                                              />
+                                              <input
+                                                type="text"
+                                                className="form-control"
+                                                value={item.allocatedSeats || ""}
+                                                disabled
+                                                readOnly
+                                              />
                                             </div>
                                           </div>
-                                        </div>
-                                      ))}
+                                        ))}
                                     </div>
                                   </div>
                                 )}
 
                                 {/* Vehicle Allocation */}
-                                {allocation.allocations && allocation.allocations.find(a => a.type === 'vehicle') && (
+                                {allocation.allocations && allocation.allocations.find((a) => a.type === "vehicle") && (
                                   <div className="allocation-section">
                                     <h6>Vehicle Allocation</h6>
                                     <div className="vehicle-lines">
-                                      {allocation.allocations.find(a => a.type === 'vehicle').cabins?.map((cabin, idx) => (
-                                        <div className="mb-3" key={idx}>
-                                          <div className="capacity-grid align-items-center">
-                                            <div className="form-control" style={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
-                                              {cabin.cabin}
-                                            </div>
-                                            <div className="form-control" style={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
-                                              {cabin.allocatedSeats}
+                                      {allocation.allocations
+                                        .find((a) => a.type === "vehicle")
+                                        .cabins?.map((item, idx) => (
+                                          <div className="mb-3" key={idx}>
+                                            <div className="capacity-grid align-items-center">
+                                              <input
+                                                type="text"
+                                                className="form-control"
+                                                value={item.cabin?.name || item.cabin || ""}
+                                                disabled
+                                                readOnly
+                                              />
+                                              <input
+                                                type="text"
+                                                className="form-control"
+                                                value={item.allocatedSeats || ""}
+                                                disabled
+                                                readOnly
+                                              />
                                             </div>
                                           </div>
-                                        </div>
-                                      ))}
+                                        ))}
                                     </div>
                                   </div>
                                 )}
