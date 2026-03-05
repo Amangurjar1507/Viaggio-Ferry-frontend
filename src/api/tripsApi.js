@@ -153,4 +153,36 @@ export const tripsApi = {
       throw error
     }
   },
+
+  /**
+   * Create availability for a trip
+   * @param {string} tripId - Trip ID
+   * @param {Object} payload - Availability data with availabilityTypes
+   */
+  createAvailability: async (tripId, payload) => {
+    try {
+      if (!tripId || tripId === "undefined") {
+        throw new Error("Invalid trip ID")
+      }
+
+      console.log("[v0] Creating availability for trip ID:", tripId, "Payload:", payload)
+
+      const response = await apiFetch(`${BASE_URL}/${tripId}/availabilities`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to create availability")
+      }
+
+      const data = await response.json()
+      console.log("[v0] Availability created successfully:", data)
+      return data
+    } catch (error) {
+      console.error("[v0] Create Availability Error:", error.message)
+      throw error
+    }
+  },
 }

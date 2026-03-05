@@ -283,10 +283,129 @@ export default function CompanyAddTrip() {
     }
   };
 
-  const onSaveAvailability = () => {
-    const payload = { passengers, cargo, vehicles, agents };
-    console.log("Availability saved", payload);
-    alert("Availability saved (mock)");
+  const onSaveAvailability = async () => {
+    try {
+      // Validate that a trip is selected
+      if (!form.trip) {
+        Swal.fire({
+          icon: "warning",
+          title: "Validation Error",
+          text: "Please select a trip before saving availability"
+        });
+        return;
+      }
+
+      // Validate that at least one availability item is added
+      if (passengers.every(p => !p.cabin) && cargo.every(c => !c.type) && vehicles.every(v => !v.type)) {
+        Swal.fire({
+          icon: "warning",
+          title: "Validation Error",
+          text: "Please add at least one passenger, cargo, or vehicle availability"
+        });
+        return;
+      }
+
+      // Show loading
+      Swal.fire({
+        title: "Saving Availability",
+        text: "Please wait...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Build the payload matching the API format
+      const availabilityTypes = [];
+
+      // Add passenger availability
+      const passengerCabins = passengers
+        .filter(p => p.cabin && p.seats)
+        .map(p => {
+          // Find the cabin ID from selectedTripCapacity
+          const cabinObj = selectedTripCapacity.passenger.find(pc => pc.cabinName === p.cabin);
+          return {
+            cabin: cabinObj?.cabinId || p.cabin,
+            seats: parseInt(p.seats) || 0
+          };
+        });
+
+      if (passengerCabins.length > 0) {
+        availabilityTypes.push({
+          type: "passenger",
+          cabins: passengerCabins
+        });
+      }
+
+      // Add cargo availability
+      const cargoCabins = cargo
+        .filter(c => c.type && c.spots)
+        .map(c => {
+          // Find the cabin ID from selectedTripCapacity
+          const cabinObj = selectedTripCapacity.cargo.find(cc => cc.cabinName === c.type);
+          return {
+            cabin: cabinObj?.cabinId || c.type,
+            seats: parseInt(c.spots) || 0
+          };
+        });
+
+      if (cargoCabins.length > 0) {
+        availabilityTypes.push({
+          type: "cargo",
+          cabins: cargoCabins
+        });
+      }
+
+      // Add vehicle availability
+      const vehicleCabins = vehicles
+        .filter(v => v.type && v.spots)
+        .map(v => {
+          // Find the cabin ID from selectedTripCapacity
+          const cabinObj = selectedTripCapacity.vehicle.find(vc => vc.cabinName === v.type);
+          return {
+            cabin: cabinObj?.cabinId || v.type,
+            seats: parseInt(v.spots) || 0
+          };
+        });
+
+      if (vehicleCabins.length > 0) {
+        availabilityTypes.push({
+          type: "vehicle",
+          cabins: vehicleCabins
+        });
+      }
+
+      const payload = {
+        availabilityTypes
+      };
+
+      console.log("[v0] Saving availability with payload:", payload);
+
+      // Call the API
+      const response = await tripsApi.createAvailability(form.trip, payload);
+
+      console.log("[v0] Availability saved successfully:", response);
+
+      // Show success message
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Availability saved successfully!",
+        confirmButtonText: "OK"
+      }).then(() => {
+        // Reset availability arrays after successful save
+        setPassengers([{ id: makeId("p_"), trip: form.trip, cabin: "", seats: "" }]);
+        setCargo([{ id: makeId("c_"), trip: form.trip, type: "", spots: "" }]);
+        setVehicles([{ id: makeId("v_"), trip: form.trip, type: "", spots: "" }]);
+      });
+    } catch (error) {
+      console.error("[v0] Error saving availability:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message || "Failed to save availability. Please try again."
+      });
+    }
   };
 
   // JSX: keep the same classes as HTML (converted to className)
