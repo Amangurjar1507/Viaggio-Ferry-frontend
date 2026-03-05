@@ -579,7 +579,7 @@ export default function CompanyEditTrip() {
   const onSaveAgentAllocations = async () => {
     try {
       // Validate that a trip is selected
-      if (!selectedTrip) {
+      if (!tripId) {
         Swal.fire({
           icon: "warning",
           title: "Validation Error",
@@ -684,7 +684,7 @@ export default function CompanyEditTrip() {
       console.log("[v0] Saving agent allocations with payload:", payload);
 
       // Call the API
-      const response = await tripsApi.createAgentAllocations(selectedTrip, selectedAvailabilityId, payload);
+      const response = await tripsApi.createAgentAllocations(tripId, selectedAvailabilityId, payload);
 
       console.log("[v0] Agent allocations saved successfully:", response);
 
@@ -1134,7 +1134,8 @@ export default function CompanyEditTrip() {
                     )}
 
                     {/* Allocate to Agent */}
-                    <div id="allocateAvailabilityContent" className={availInnerTab === "allocate" ? "" : "hidden"}>
+                    {availInnerTab === "allocate" && (
+                    <div id="allocateAvailabilityContent">
                       <div id="agent-allocation-container">
                         {agents.map((agent) => (
                           <div className="agent-block" key={agent.id}>
@@ -1261,6 +1262,7 @@ export default function CompanyEditTrip() {
                         <button type="button" className="btn btn-success" onClick={onSaveAgentAllocations}>Save Allocation</button>
                       </div>
                     </div>
+                    )}
                   </div>
                 )}
 
