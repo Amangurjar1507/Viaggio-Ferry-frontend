@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { shipsApi } from "../api/shipsApi";
 import { portsApi } from "../api/portsApi";
 import { tripsApi } from "../api/tripsApi";
+import { partnersApi } from "../api/partnersApi";
 import Swal from "sweetalert2";
 
 const makeId = (prefix = "") => `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2,8)}`;
@@ -18,6 +19,7 @@ export default function CompanyAddTrip() {
   const [ships, setShips] = useState([]);
   const [ports, setPorts] = useState([]);
   const [trips, setTrips] = useState([]);
+  const [partners, setPartners] = useState([]);
   const [loadingData, setLoadingData] = useState(false);
   const [selectedTripCapacity, setSelectedTripCapacity] = useState({
     passenger: [],
@@ -84,8 +86,8 @@ export default function CompanyAddTrip() {
     try {
       setLoadingData(true);
       
-      // Fetch ships, ports, and trips in parallel
-      const [shipsRes, portsRes, tripsRes] = await Promise.all([
+      // Fetch ships, ports, trips, and partners in parallel
+      const [shipsRes, portsRes, tripsRes, partnersRes] = await Promise.all([
         shipsApi.getShips(1, 100, "").catch(err => {
           console.error("[v0] Error fetching ships:", err);
           return { data: { ships: [] } };
@@ -97,6 +99,10 @@ export default function CompanyAddTrip() {
         tripsApi.getTrips(1, 100, "").catch(err => {
           console.error("[v0] Error fetching trips:", err);
           return { data: { trips: [] } };
+        }),
+        partnersApi.getPartners(1, 100, "").catch(err => {
+          console.error("[v0] Error fetching partners:", err);
+          return { data: [] };
         })
       ]);
 
@@ -104,20 +110,23 @@ export default function CompanyAddTrip() {
       const shipsList = shipsRes?.data?.ships || [];
       const portsList = portsRes?.data?.ports || [];
       const tripsList = tripsRes?.data?.trips || [];
+      const partnersList = partnersRes?.data || [];
 
       console.log("[v0] Ships loaded:", shipsList);
       console.log("[v0] Ports loaded:", portsList);
       console.log("[v0] Trips loaded:", tripsList);
+      console.log("[v0] Partners loaded:", partnersList);
 
       setShips(shipsList);
       setPorts(portsList);
       setTrips(tripsList);
+      setPartners(partnersList);
     } catch (err) {
       console.error("[v0] Error fetching dropdown data:", err);
       Swal.fire({
         icon: "warning",
         title: "Warning",
-        text: "Could not load ships, ports and trips data. Using empty lists."
+        text: "Could not load all dropdown data. Using empty lists."
       });
     } finally {
       setLoadingData(false);
@@ -746,8 +755,12 @@ export default function CompanyAddTrip() {
                               </div>
 
                               <select className="form-select mb-3" value={agent.agentName} onChange={(e) => setAgents((a) => a.map((ag) => (ag.id === agent.id ? { ...ag, agentName: e.target.value } : ag)))}>
-                                <option>Agent Alpha</option>
-                                <option>Agent Beta</option>
+                                <option value="">-- Select a Partner --</option>
+                                {partners.map((partner) => (
+                                  <option key={partner._id} value={partner.name}>
+                                    {partner.name}
+                                  </option>
+                                ))}
                               </select>
 
                               <div className="allocation-section">
