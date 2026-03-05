@@ -369,9 +369,12 @@ export default function CompanyAddTrip() {
           // Find the rule ID for each selected rule name
           const ticketingRulesPayload = {
             ticketingRules: rulesWithValidSelection.map(rule => {
-              const selectedRule = ticketingRules.find(tr => tr.ruleName === rule.ruleName);
+              // Get the rules for this rule type
+              const ruleTypeKey = rule.ruleType === "Void" ? "VOID" : rule.ruleType === "Refund" ? "REFUND" : "REISSUE";
+              const rulesForType = ticketingRulesByType[ruleTypeKey] || [];
+              const selectedRule = rulesForType.find(tr => tr.ruleName === rule.ruleName);
               return {
-                ruleType: rule.ruleType === "Void" ? "VOID" : rule.ruleType === "Refund" ? "REFUND" : "REISSUE",
+                ruleType: ruleTypeKey,
                 rule: selectedRule?._id || rule.ruleName
               };
             })
@@ -695,9 +698,12 @@ export default function CompanyAddTrip() {
       // Build the payload matching the API format
       const ticketingRulesPayload = {
         ticketingRules: rulesWithValidSelection.map(rule => {
-          const selectedRule = ticketingRules.find(tr => tr.ruleName === rule.ruleName);
+          // Get the rules for this rule type
+          const ruleTypeKey = rule.ruleType === "Void" ? "VOID" : rule.ruleType === "Refund" ? "REFUND" : "REISSUE";
+          const rulesForType = ticketingRulesByType[ruleTypeKey] || [];
+          const selectedRule = rulesForType.find(tr => tr.ruleName === rule.ruleName);
           return {
-            ruleType: rule.ruleType === "Void" ? "VOID" : rule.ruleType === "Refund" ? "REFUND" : "REISSUE",
+            ruleType: ruleTypeKey,
             rule: selectedRule?._id || ""
           };
         })
