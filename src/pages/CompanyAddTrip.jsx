@@ -110,7 +110,7 @@ export default function CompanyAddTrip() {
       const shipsList = shipsRes?.data?.ships || [];
       const portsList = portsRes?.data?.ports || [];
       const tripsList = tripsRes?.data?.trips || [];
-      const partnersList = partnersRes || [];
+      const partnersList = Array.isArray(partnersRes) ? partnersRes : (partnersRes?.data || []);
 
       console.log("[v0] Ships loaded:", shipsList);
       console.log("[v0] Ports loaded:", portsList);
