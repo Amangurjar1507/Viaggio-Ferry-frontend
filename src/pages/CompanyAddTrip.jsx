@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { shipsApi } from "../api/shipsApi";
 import { portsApi } from "../api/portsApi";
 import { tripsApi } from "../api/tripsApi";
-import { partnersApi } from "../api/partnersApi";
+import { partnerApi } from "../api/partnerApi";
 import Swal from "sweetalert2";
 
 const makeId = (prefix = "") => `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2,8)}`;
@@ -100,9 +100,9 @@ export default function CompanyAddTrip() {
           console.error("[v0] Error fetching trips:", err);
           return { data: { trips: [] } };
         }),
-        partnersApi.getPartners(1, 100, "").catch(err => {
+        partnerApi.getPartnersList().catch(err => {
           console.error("[v0] Error fetching partners:", err);
-          return { data: [] };
+          return [];
         })
       ]);
 
@@ -110,7 +110,7 @@ export default function CompanyAddTrip() {
       const shipsList = shipsRes?.data?.ships || [];
       const portsList = portsRes?.data?.ports || [];
       const tripsList = tripsRes?.data?.trips || [];
-      const partnersList = partnersRes?.data || [];
+      const partnersList = partnersRes || [];
 
       console.log("[v0] Ships loaded:", shipsList);
       console.log("[v0] Ports loaded:", portsList);
