@@ -8,6 +8,7 @@ import { shipsApi } from "../api/shipsApi";
 import { portsApi } from "../api/portsApi";
 import { tripsApi } from "../api/tripsApi";
 import { partnerApi } from "../api/partnerApi";
+import { ticketingRulesApi } from "../api/ticketingRulesApi";
 import Swal from "sweetalert2";
 
 const makeId = (prefix = "") => `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2,8)}`;
@@ -20,6 +21,7 @@ export default function CompanyAddTrip() {
   const [ports, setPorts] = useState([]);
   const [trips, setTrips] = useState([]);
   const [partners, setPartners] = useState([]);
+  const [ticketingRules, setTicketingRules] = useState([]);
   const [loadingData, setLoadingData] = useState(false);
   const [selectedTripCapacity, setSelectedTripCapacity] = useState({
     passenger: [],
@@ -93,8 +95,8 @@ export default function CompanyAddTrip() {
     try {
       setLoadingData(true);
       
-      // Fetch ships, ports, trips, and partners in parallel
-      const [shipsRes, portsRes, tripsRes, partnersRes] = await Promise.all([
+      // Fetch ships, ports, trips, partners, and ticketing rules in parallel
+      const [shipsRes, portsRes, tripsRes, partnersRes, rulesRes] = await Promise.all([
         shipsApi.getShips(1, 100, "").catch(err => {
           console.error("[v0] Error fetching ships:", err);
           return { data: { ships: [] } };
@@ -110,6 +112,10 @@ export default function CompanyAddTrip() {
         partnerApi.getPartnersList().catch(err => {
           console.error("[v0] Error fetching partners:", err);
           return [];
+        }),
+        ticketingRulesApi.getRules(1, 100, "", "REFUND").catch(err => {
+          console.error("[v0] Error fetching ticketing rules:", err);
+          return { data: [] };
         })
       ]);
 
@@ -118,16 +124,19 @@ export default function CompanyAddTrip() {
       const portsList = portsRes?.data?.ports || [];
       const tripsList = tripsRes?.data?.trips || [];
       const partnersList = Array.isArray(partnersRes) ? partnersRes : (partnersRes?.data || []);
+      const rulesList = rulesRes?.data || [];
 
       console.log("[v0] Ships loaded:", shipsList);
       console.log("[v0] Ports loaded:", portsList);
       console.log("[v0] Trips loaded:", tripsList);
       console.log("[v0] Partners loaded:", partnersList);
+      console.log("[v0] Ticketing rules loaded:", rulesList);
 
       setShips(shipsList);
       setPorts(portsList);
       setTrips(tripsList);
       setPartners(partnersList);
+      setTicketingRules(rulesList);
     } catch (err) {
       console.error("[v0] Error fetching dropdown data:", err);
       Swal.fire({
@@ -1076,10 +1085,12 @@ export default function CompanyAddTrip() {
                             </select>
 
                             <select className="form-select" name="rulename" value={rule.ruleName} onChange={(e) => updateTripRule(rule.id, "ruleName", e.target.value)}>
-                              <option>Select Rule</option>
-                              <option>Rule1</option>
-                              <option>Rule2</option>
-                              <option>Rule3</option>
+                              <option value="">Select Rule</option>
+                              {ticketingRules.map((ticketRule) => (
+                                <option key={ticketRule._id} value={ticketRule.ruleName}>
+                                  {ticketRule.ruleName} ({ticketRule.ruleType})
+                                </option>
+                              ))}
                             </select>
 
                             <button type="button" className="btn btn-sm btn-danger remove-trip-rule" onClick={() => removeTripRule(rule.id)}>Remove</button>
