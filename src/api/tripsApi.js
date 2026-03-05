@@ -253,6 +253,40 @@ export const tripsApi = {
   },
 
   /**
+   * Get agent allocations for trip availability
+   * @param {string} tripId - Trip ID
+   * @param {string} availabilityId - Availability ID
+   */
+  getAgentAllocations: async (tripId, availabilityId) => {
+    try {
+      if (!tripId || tripId === "undefined") {
+        throw new Error("Invalid trip ID")
+      }
+      if (!availabilityId || availabilityId === "undefined") {
+        throw new Error("Invalid availability ID")
+      }
+
+      console.log("[v0] Fetching agent allocations for trip:", tripId, "availability:", availabilityId)
+
+      const response = await apiFetch(`${BASE_URL}/${tripId}/availabilities/${availabilityId}/agent-allocations`, {
+        method: "GET",
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to fetch agent allocations")
+      }
+
+      const data = await response.json()
+      console.log("[v0] Agent allocations fetched successfully:", data)
+      return data
+    } catch (error) {
+      console.error("[v0] Get Agent Allocations Error:", error.message)
+      throw error
+    }
+  },
+
+  /**
    * Create agent allocations for trip availability
    * @param {string} tripId - Trip ID
    * @param {string} availabilityId - Availability ID

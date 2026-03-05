@@ -39,6 +39,9 @@ export default function CompanyEditTrip() {
     vehicle: []
   });
   const [selectedAvailabilityId, setSelectedAvailabilityId] = useState("");
+  const [availabilitiesList, setAvailabilitiesList] = useState([]);
+  const [agentAllocations, setAgentAllocations] = useState([]);
+  const [loadingAllocations, setLoadingAllocations] = useState(false);
 
   // Tab states (main tabs and inner availability tabs)
   const [mainTab, setMainTab] = useState("details"); // details | availability | ticketing
@@ -213,14 +216,24 @@ export default function CompanyEditTrip() {
         const availData = availabilityRes.data || availabilityRes;
         console.log("[v0] Availability data loaded:", availData);
 
-        if (availData._id) {
+        // Handle array of availabilities
+        if (Array.isArray(availData)) {
+          setAvailabilitiesList(availData);
+          if (availData.length > 0 && availData[0]._id) {
+            setSelectedAvailabilityId(availData[0]._id);
+          }
+        } else if (availData._id) {
+          // Handle single availability response
+          setAvailabilitiesList([availData]);
           setSelectedAvailabilityId(availData._id);
         }
 
-        if (availData.availabilityTypes && availData.availabilityTypes.length > 0) {
-          const passengerTypes = availData.availabilityTypes.find(a => a.type === "passenger");
-          const cargoTypes = availData.availabilityTypes.find(a => a.type === "cargo");
-          const vehicleTypes = availData.availabilityTypes.find(a => a.type === "vehicle");
+        // Process first availability for prefilling
+        const firstAvail = Array.isArray(availData) ? availData[0] : availData;
+        if (firstAvail && firstAvail.availabilityTypes && firstAvail.availabilityTypes.length > 0) {
+          const passengerTypes = firstAvail.availabilityTypes.find(a => a.type === "passenger");
+          const cargoTypes = firstAvail.availabilityTypes.find(a => a.type === "cargo");
+          const vehicleTypes = firstAvail.availabilityTypes.find(a => a.type === "vehicle");
 
           setSelectedTripAvailability({
             passenger: passengerTypes?.cabins || [],
@@ -342,6 +355,36 @@ export default function CompanyEditTrip() {
   const handleRuleTypeChange = (ruleId, ruleType) => {
     setTripRules((r) => r.map((rule) => (rule.id === ruleId ? { ...rule, ruleName: "" } : rule)));
     console.log("[v0] Rule type changed to:", ruleType, "Rules available:", ticketingRulesByType);
+  };
+
+  // Fetch agent allocations for selected availability
+  const fetchAgentAllocations = async (availabilityId) => {
+    if (!availabilityId) {
+      Swal.fire({
+        icon: "warning",
+        title: "Selection Required",
+        text: "Please select an availability first"
+      });
+      return;
+    }
+
+    try {
+      setLoadingAllocations(true);
+      console.log("[v0] Fetching allocations for trip:", tripId, "availability:", availabilityId);
+      const response = await tripsApi.getAgentAllocations(tripId, availabilityId);
+      console.log("[v0] Agent allocations fetched:", response);
+      setAgentAllocations(response.data || []);
+    } catch (error) {
+      console.error("[v0] Error fetching allocations:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to load agent allocations"
+      });
+      setAgentAllocations([]);
+    } finally {
+      setLoadingAllocations(false);
+    }
   };
 
   // Save handlers
@@ -961,7 +1004,99 @@ export default function CompanyEditTrip() {
                     {/* Allocate to Agent */}
                     {availInnerTab === "allocate" && (
                       <div>
-                        <p className="text-muted">Agent allocation functionality goes here</p>
+                        <div className="row mb-3">
+                          <div className="col-md-6">
+                            <label className="form-label">Select Availability</label>
+                            <select 
+                              className="form-select" 
+                              value={selectedAvailabilityId} 
+                              onChange={(e) => {
+                                setSelectedAvailabilityId(e.target.value);
+                              }}
+                            >
+                              <option value="">-- Select an Availability --</option>
+                              {availabilitiesList.map((avail) => (
+                                <option key={avail._id} value={avail._id}>
+                                  {avail.name || `Availability ${avail._id.slice(-4)}`}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="col-md-6 d-flex align-items-end">
+                            <button 
+                              type="button" 
+                              className="btn btn-primary"
+                              onClick={() => fetchAgentAllocations(selectedAvailabilityId)}
+                              disabled={!selectedAvailabilityId || loadingAllocations}
+                            >
+                              {loadingAllocations ? "Loading..." : "Load Allocations"}
+                            </button>
+                          </div>
+                        </div>
+
+                        {agentAllocations.length > 0 ? (
+                          <div id="agent-allocations-container">
+                            {agentAllocations.map((allocation) => (
+                              <div key={allocation._id} className="agent-block mb-4" style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '5px' }}>
+                                <div className="d-flex justify-content-between align-items-center mb-3">
+                                  <h6 className="mb-0">Agent: <strong>{allocation.agent?.name || 'Unknown'}</strong></h6>
+                                  <small className="text-muted">ID: {allocation.agent?._id}</small>
+                                </div>
+
+                                {allocation.allocations && allocation.allocations.length > 0 ? (
+                                  <>
+                                    {/* Passenger Allocations */}
+                                    {allocation.allocations.find(a => a.type === 'passenger') && (
+                                      <div className="allocation-section mb-3">
+                                        <h6 style={{ color: '#0c5fbf', marginBottom: '10px' }}>Passenger Allocations</h6>
+                                        {allocation.allocations.find(a => a.type === 'passenger').cabins?.map((cabin, idx) => (
+                                          <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #eee' }}>
+                                            <div><strong>Cabin ID:</strong> {cabin.cabin}</div>
+                                            <div><strong>Allocated Seats:</strong> {cabin.allocatedSeats}</div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {/* Cargo Allocations */}
+                                    {allocation.allocations.find(a => a.type === 'cargo') && (
+                                      <div className="allocation-section mb-3">
+                                        <h6 style={{ color: '#0c5fbf', marginBottom: '10px' }}>Cargo Allocations</h6>
+                                        {allocation.allocations.find(a => a.type === 'cargo').cabins?.map((cabin, idx) => (
+                                          <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #eee' }}>
+                                            <div><strong>Hold ID:</strong> {cabin.cabin}</div>
+                                            <div><strong>Allocated Spots:</strong> {cabin.allocatedSeats}</div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {/* Vehicle Allocations */}
+                                    {allocation.allocations.find(a => a.type === 'vehicle') && (
+                                      <div className="allocation-section">
+                                        <h6 style={{ color: '#0c5fbf', marginBottom: '10px' }}>Vehicle Allocations</h6>
+                                        {allocation.allocations.find(a => a.type === 'vehicle').cabins?.map((cabin, idx) => (
+                                          <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #eee' }}>
+                                            <div><strong>Vehicle Type ID:</strong> {cabin.cabin}</div>
+                                            <div><strong>Allocated Spots:</strong> {cabin.allocatedSeats}</div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </>
+                                ) : (
+                                  <p className="text-muted mb-0">No allocations for this agent</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : loadingAllocations ? (
+                          <div className="text-center py-4">
+                            <p className="text-muted">Loading allocations...</p>
+                          </div>
+                        ) : (
+                          <p className="text-muted">Select an availability and click "Load Allocations" to view agent allocations</p>
+                        )}
                       </div>
                     )}
                   </div>
