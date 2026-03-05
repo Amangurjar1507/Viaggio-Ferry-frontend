@@ -716,6 +716,11 @@ export default function CompanyAddTrip() {
 
       console.log("[v0] Ticketing rules saved successfully:", response);
 
+      // Reset form after successful save
+      setTripRules([
+        { id: makeId("r_"), trip: "", ruleType: "Refund", ruleName: "" }
+      ]);
+
       // Show success message
       Swal.fire({
         icon: "success",
