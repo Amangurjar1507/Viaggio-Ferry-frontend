@@ -26,6 +26,11 @@ export default function CompanyAddTrip() {
     cargo: [],
     vehicle: []
   });
+  const [selectedTripAvailability, setSelectedTripAvailability] = useState({
+    passenger: [],
+    cargo: [],
+    vehicle: []
+  });
 
   // Tab states (main tabs and inner availability tabs)
   const [mainTab, setMainTab] = useState("details"); // details | availability | ticketing
@@ -133,8 +138,8 @@ export default function CompanyAddTrip() {
     }
   };
 
-  // Handler for trip selection to load capacity details
-  const handleTripSelection = (tripId) => {
+  // Handler for trip selection to load capacity details and availabilities
+  const handleTripSelection = async (tripId) => {
     setForm({ ...form, trip: tripId });
     
     if (tripId) {
@@ -152,8 +157,31 @@ export default function CompanyAddTrip() {
         console.log("[v0] No capacity details found for trip");
         setSelectedTripCapacity({ passenger: [], cargo: [], vehicle: [] });
       }
+
+      // Fetch availabilities for the selected trip
+      try {
+        const availabilityResponse = await tripsApi.getAvailabilities(tripId);
+        console.log("[v0] Availabilities fetched:", availabilityResponse);
+        
+        if (availabilityResponse?.data?.availabilityTypes) {
+          const availTypes = availabilityResponse.data.availabilityTypes;
+          const passengerAvail = availTypes.find(a => a.type === "passenger")?.cabins || [];
+          const cargoAvail = availTypes.find(a => a.type === "cargo")?.cabins || [];
+          const vehicleAvail = availTypes.find(a => a.type === "vehicle")?.cabins || [];
+          
+          setSelectedTripAvailability({
+            passenger: passengerAvail,
+            cargo: cargoAvail,
+            vehicle: vehicleAvail
+          });
+        }
+      } catch (error) {
+        console.error("[v0] Error fetching availabilities:", error);
+        setSelectedTripAvailability({ passenger: [], cargo: [], vehicle: [] });
+      }
     } else {
       setSelectedTripCapacity({ passenger: [], cargo: [], vehicle: [] });
+      setSelectedTripAvailability({ passenger: [], cargo: [], vehicle: [] });
     }
   };
 
@@ -744,7 +772,38 @@ export default function CompanyAddTrip() {
                         </div>
 
                         <h5 className="mb-3">Total Availability for Allocation</h5>
-                        <div id="allocation-summary" className="mb-3">First class: 0 | Pallet: 0 | Car: 0</div>
+                        <div id="allocation-summary" className="mb-3">
+                          {selectedTripAvailability.passenger.length > 0 && (
+                            <div>
+                              <span>Passengers: </span>
+                              {selectedTripAvailability.passenger.map((p) => (
+                                <span key={p.cabin._id} style={{ marginRight: '15px' }}>
+                                  {p.cabin.name} - <span className="text-danger" style={{ fontWeight: 'bold' }}>Remaining: {p.remainingSeats}</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {selectedTripAvailability.cargo.length > 0 && (
+                            <div>
+                              <span>Cargo: </span>
+                              {selectedTripAvailability.cargo.map((c) => (
+                                <span key={c.cabin._id} style={{ marginRight: '15px' }}>
+                                  {c.cabin.name} - <span className="text-danger" style={{ fontWeight: 'bold' }}>Remaining: {c.remainingSeats}</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {selectedTripAvailability.vehicle.length > 0 && (
+                            <div>
+                              <span>Vehicles: </span>
+                              {selectedTripAvailability.vehicle.map((v) => (
+                                <span key={v.cabin._id} style={{ marginRight: '15px' }}>
+                                  {v.cabin.name} - <span className="text-danger" style={{ fontWeight: 'bold' }}>Remaining: {v.remainingSeats}</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
 
                         <div id="agent-allocation-container">
                           {agents.map((agent) => (
