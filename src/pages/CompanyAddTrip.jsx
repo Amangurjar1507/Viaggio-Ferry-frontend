@@ -21,7 +21,11 @@ export default function CompanyAddTrip() {
   const [ports, setPorts] = useState([]);
   const [trips, setTrips] = useState([]);
   const [partners, setPartners] = useState([]);
-  const [ticketingRules, setTicketingRules] = useState([]);
+  const [ticketingRulesByType, setTicketingRulesByType] = useState({
+    VOID: [],
+    REFUND: [],
+    REISSUE: []
+  });
   const [loadingData, setLoadingData] = useState(false);
   const [selectedTripCapacity, setSelectedTripCapacity] = useState({
     passenger: [],
@@ -95,8 +99,8 @@ export default function CompanyAddTrip() {
     try {
       setLoadingData(true);
       
-      // Fetch ships, ports, trips, partners, and ticketing rules in parallel
-      const [shipsRes, portsRes, tripsRes, partnersRes, rulesRes] = await Promise.all([
+      // Fetch ships, ports, trips, partners in parallel
+      const [shipsRes, portsRes, tripsRes, partnersRes] = await Promise.all([
         shipsApi.getShips(1, 100, "").catch(err => {
           console.error("[v0] Error fetching ships:", err);
           return { data: { ships: [] } };
@@ -112,10 +116,6 @@ export default function CompanyAddTrip() {
         partnerApi.getPartnersList().catch(err => {
           console.error("[v0] Error fetching partners:", err);
           return [];
-        }),
-        ticketingRuleApi.getTicketingRules(1, 100, { ruleType: "REFUND" }).catch(err => {
-          console.error("[v0] Error fetching ticketing rules:", err);
-          return { data: [] };
         })
       ]);
 
@@ -124,19 +124,44 @@ export default function CompanyAddTrip() {
       const portsList = portsRes?.data?.ports || [];
       const tripsList = tripsRes?.data?.trips || [];
       const partnersList = Array.isArray(partnersRes) ? partnersRes : (partnersRes?.data || []);
-      const rulesList = rulesRes?.data || [];
 
       console.log("[v0] Ships loaded:", shipsList);
       console.log("[v0] Ports loaded:", portsList);
       console.log("[v0] Trips loaded:", tripsList);
       console.log("[v0] Partners loaded:", partnersList);
-      console.log("[v0] Ticketing rules loaded:", rulesList);
 
       setShips(shipsList);
       setPorts(portsList);
       setTrips(tripsList);
       setPartners(partnersList);
-      setTicketingRules(rulesList);
+
+      // Fetch all ticketing rule types
+      try {
+        const [voidRulesRes, refundRulesRes, reissueRulesRes] = await Promise.all([
+          ticketingRuleApi.getTicketingRules(1, 100, { ruleType: "VOID" }).catch(err => {
+            console.error("[v0] Error fetching VOID rules:", err);
+            return { data: [] };
+          }),
+          ticketingRuleApi.getTicketingRules(1, 100, { ruleType: "REFUND" }).catch(err => {
+            console.error("[v0] Error fetching REFUND rules:", err);
+            return { data: [] };
+          }),
+          ticketingRuleApi.getTicketingRules(1, 100, { ruleType: "REISSUE" }).catch(err => {
+            console.error("[v0] Error fetching REISSUE rules:", err);
+            return { data: [] };
+          })
+        ]);
+
+        console.log("[v0] Ticketing rules loaded - VOID:", voidRulesRes?.data, "REFUND:", refundRulesRes?.data, "REISSUE:", reissueRulesRes?.data);
+
+        setTicketingRulesByType({
+          VOID: voidRulesRes?.data || [],
+          REFUND: refundRulesRes?.data || [],
+          REISSUE: reissueRulesRes?.data || []
+        });
+      } catch (err) {
+        console.error("[v0] Error fetching ticketing rules:", err);
+      }
     } catch (err) {
       console.error("[v0] Error fetching dropdown data:", err);
       Swal.fire({
@@ -278,31 +303,11 @@ export default function CompanyAddTrip() {
   const removeTripRule = (id) => setTripRules((r) => r.filter((x) => x.id !== id));
   const updateTripRule = (id, key, value) => setTripRules((r) => r.map((x) => (x.id === id ? { ...x, [key]: value } : x)));
 
-  const handleRuleTypeChange = async (ruleId, ruleType) => {
-    try {
-      console.log("[v0] Fetching rules for type:", ruleType);
-      
-      // Clear the ruleName for this line when type changes
-      setTripRules((r) => r.map((rule) => (rule.id === ruleId ? { ...rule, ruleName: "" } : rule)));
-      
-      // Map display values to API values
-      const ruleTypeMap = {
-        "Void": "VOID",
-        "Refund": "REFUND",
-        "Reissue": "REISSUE"
-      };
-      
-      const apiRuleType = ruleTypeMap[ruleType] || ruleType;
-      
-      const response = await ticketingRuleApi.getTicketingRules(1, 100, { ruleType: apiRuleType });
-      const rulesList = response?.data || [];
-      
-      console.log("[v0] Rules fetched for type:", apiRuleType, "Rules:", rulesList);
-      
-      setTicketingRules(rulesList);
-    } catch (error) {
-      console.error("[v0] Error fetching rules for type:", error);
-    }
+  const handleRuleTypeChange = (ruleId, ruleType) => {
+    // Clear the ruleName for this line when type changes
+    setTripRules((r) => r.map((rule) => (rule.id === ruleId ? { ...rule, ruleName: "" } : rule)));
+    
+    console.log("[v0] Rule type changed to:", ruleType, "Rules available:", ticketingRulesByType);
   };
 
   // Save handlers (currently mock)
@@ -1210,23 +1215,11 @@ export default function CompanyAddTrip() {
 
                             <select className="form-select" name="rulename" value={rule.ruleName} onChange={(e) => updateTripRule(rule.id, "ruleName", e.target.value)}>
                               <option value="">Select Rule</option>
-                              {ticketingRules
-                                .filter((ticketRule) => {
-                                  // Map rule type to API format
-                                  const ruleTypeMap = {
-                                    "Void": "VOID",
-                                    "Refund": "REFUND",
-                                    "Reissue": "REISSUE"
-                                  };
-                                  const selectedType = ruleTypeMap[rule.ruleType];
-                                  // Only show rules that match the current line's selected type
-                                  return ticketRule.ruleType === selectedType;
-                                })
-                                .map((ticketRule) => (
-                                  <option key={ticketRule._id} value={ticketRule.ruleName}>
-                                    {ticketRule.ruleName} ({ticketRule.ruleType})
-                                  </option>
-                                ))}
+                              {rule.ruleType && ticketingRulesByType[rule.ruleType === "Void" ? "VOID" : rule.ruleType === "Refund" ? "REFUND" : "REISSUE"]?.map((ticketRule) => (
+                                <option key={ticketRule._id} value={ticketRule.ruleName}>
+                                  {ticketRule.ruleName} ({ticketRule.ruleType})
+                                </option>
+                              ))}
                             </select>
 
                             <button type="button" className="btn btn-sm btn-danger remove-trip-rule" onClick={() => removeTripRule(rule.id)}>Remove</button>
