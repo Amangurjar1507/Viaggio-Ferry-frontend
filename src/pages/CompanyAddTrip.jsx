@@ -163,17 +163,24 @@ export default function CompanyAddTrip() {
         const availabilityResponse = await tripsApi.getAvailabilities(tripId);
         console.log("[v0] Availabilities fetched:", availabilityResponse);
         
-        if (availabilityResponse?.data?.availabilityTypes) {
-          const availTypes = availabilityResponse.data.availabilityTypes;
+        // Check if availabilityTypes is directly in response or nested under data
+        const availTypes = availabilityResponse?.availabilityTypes || availabilityResponse?.data?.availabilityTypes || [];
+        
+        if (availTypes && availTypes.length > 0) {
           const passengerAvail = availTypes.find(a => a.type === "passenger")?.cabins || [];
           const cargoAvail = availTypes.find(a => a.type === "cargo")?.cabins || [];
           const vehicleAvail = availTypes.find(a => a.type === "vehicle")?.cabins || [];
+          
+          console.log("[v0] Parsed availabilities - Passenger:", passengerAvail, "Cargo:", cargoAvail, "Vehicle:", vehicleAvail);
           
           setSelectedTripAvailability({
             passenger: passengerAvail,
             cargo: cargoAvail,
             vehicle: vehicleAvail
           });
+        } else {
+          console.log("[v0] No availabilities found for trip");
+          setSelectedTripAvailability({ passenger: [], cargo: [], vehicle: [] });
         }
       } catch (error) {
         console.error("[v0] Error fetching availabilities:", error);
@@ -828,7 +835,12 @@ export default function CompanyAddTrip() {
                                   {agent.passengerLines.map((line) => (
                                     <div className="capacity-grid align-items-center mb-2" key={line.id}>
                                       <select className="form-select" value={line.select} onChange={(e) => updateAgentLine(agent.id, "passenger", line.id, "select", e.target.value)}>
-                                        <option>Select</option>
+                                        <option value="">Select</option>
+                                        {selectedTripAvailability.passenger.map((p) => (
+                                          <option key={p.cabin._id} value={p.cabin._id}>
+                                            {p.cabin.name} (Remaining: {p.remainingSeats})
+                                          </option>
+                                        ))}
                                       </select>
                                       <input className="form-control" placeholder="Qty" value={line.qty} onChange={(e) => updateAgentLine(agent.id, "passenger", line.id, "qty", e.target.value)} />
                                       <button type="button" className="btn btn-sm btn-danger" onClick={() => removeAgentLine(agent.id, "passenger", line.id)}>Remove</button>
@@ -844,7 +856,12 @@ export default function CompanyAddTrip() {
                                   {agent.cargoLines.map((line) => (
                                     <div className="capacity-grid align-items-center mb-2" key={line.id}>
                                       <select className="form-select" value={line.select} onChange={(e) => updateAgentLine(agent.id, "cargo", line.id, "select", e.target.value)}>
-                                        <option>Select</option>
+                                        <option value="">Select</option>
+                                        {selectedTripAvailability.cargo.map((c) => (
+                                          <option key={c.cabin._id} value={c.cabin._id}>
+                                            {c.cabin.name} (Remaining: {c.remainingSeats})
+                                          </option>
+                                        ))}
                                       </select>
                                       <input className="form-control" placeholder="Qty" value={line.qty} onChange={(e) => updateAgentLine(agent.id, "cargo", line.id, "qty", e.target.value)} />
                                       <button type="button" className="btn btn-sm btn-danger" onClick={() => removeAgentLine(agent.id, "cargo", line.id)}>Remove</button>
@@ -860,7 +877,12 @@ export default function CompanyAddTrip() {
                                   {agent.vehicleLines.map((line) => (
                                     <div className="capacity-grid align-items-center mb-2" key={line.id}>
                                       <select className="form-select" value={line.select} onChange={(e) => updateAgentLine(agent.id, "vehicle", line.id, "select", e.target.value)}>
-                                        <option>Select</option>
+                                        <option value="">Select</option>
+                                        {selectedTripAvailability.vehicle.map((v) => (
+                                          <option key={v.cabin._id} value={v.cabin._id}>
+                                            {v.cabin.name} (Remaining: {v.remainingSeats})
+                                          </option>
+                                        ))}
                                       </select>
                                       <input className="form-control" placeholder="Qty" value={line.qty} onChange={(e) => updateAgentLine(agent.id, "vehicle", line.id, "qty", e.target.value)} />
                                       <button type="button" className="btn btn-sm btn-danger" onClick={() => removeAgentLine(agent.id, "vehicle", line.id)}>Remove</button>
