@@ -278,9 +278,12 @@ export default function CompanyAddTrip() {
   const removeTripRule = (id) => setTripRules((r) => r.filter((x) => x.id !== id));
   const updateTripRule = (id, key, value) => setTripRules((r) => r.map((x) => (x.id === id ? { ...x, [key]: value } : x)));
 
-  const handleRuleTypeChange = async (ruleType) => {
+  const handleRuleTypeChange = async (ruleId, ruleType) => {
     try {
       console.log("[v0] Fetching rules for type:", ruleType);
+      
+      // Clear the ruleName for this line when type changes
+      setTripRules((r) => r.map((rule) => (rule.id === ruleId ? { ...rule, ruleName: "" } : rule)));
       
       // Map display values to API values
       const ruleTypeMap = {
@@ -1197,7 +1200,7 @@ export default function CompanyAddTrip() {
                           <div className="capacity-grid align-items-center mb-2" key={rule.id}>
                             <select className="form-select" value={rule.ruleType} onChange={(e) => {
                               updateTripRule(rule.id, "ruleType", e.target.value);
-                              handleRuleTypeChange(e.target.value);
+                              handleRuleTypeChange(rule.id, e.target.value);
                             }}>
                               <option value="">Select Type</option>
                               <option value="Void">Void</option>
