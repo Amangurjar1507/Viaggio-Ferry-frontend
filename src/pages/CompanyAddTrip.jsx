@@ -8,7 +8,7 @@ import { shipsApi } from "../api/shipsApi";
 import { portsApi } from "../api/portsApi";
 import { tripsApi } from "../api/tripsApi";
 import { partnerApi } from "../api/partnerApi";
-import { ticketingRulesApi } from "../api/ticketingRulesApi";
+import { ticketingRuleApi } from "../api/ticketingRuleApi";
 import Swal from "sweetalert2";
 
 const makeId = (prefix = "") => `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2,8)}`;
@@ -113,7 +113,7 @@ export default function CompanyAddTrip() {
           console.error("[v0] Error fetching partners:", err);
           return [];
         }),
-        ticketingRulesApi.getRules(1, 100, "", "REFUND").catch(err => {
+        ticketingRuleApi.getTicketingRules(1, 100, { ruleType: "REFUND" }).catch(err => {
           console.error("[v0] Error fetching ticketing rules:", err);
           return { data: [] };
         })
