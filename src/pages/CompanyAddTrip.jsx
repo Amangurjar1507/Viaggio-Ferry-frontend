@@ -351,6 +351,31 @@ export default function CompanyAddTrip() {
       
       console.log("[v0] Trip created successfully:", response);
 
+      // Save ticketing rules if any are present
+      if (tripRules && tripRules.length > 0) {
+        const rulesWithValidSelection = tripRules.filter(rule => rule.ruleName && rule.ruleType);
+        
+        if (rulesWithValidSelection.length > 0) {
+          console.log("[v0] Saving ticketing rules for trip:", response._id);
+          
+          // Find the rule ID for each selected rule name
+          const ticketingRulesPayload = {
+            ticketingRules: rulesWithValidSelection.map(rule => {
+              const selectedRule = ticketingRules.find(tr => tr.ruleName === rule.ruleName);
+              return {
+                ruleType: rule.ruleType === "Void" ? "VOID" : rule.ruleType === "Refund" ? "REFUND" : "REISSUE",
+                rule: selectedRule?._id || rule.ruleName
+              };
+            })
+          };
+          
+          console.log("[v0] Ticketing rules payload:", ticketingRulesPayload);
+          
+          await tripsApi.updateTicketingRules(response._id, ticketingRulesPayload);
+          console.log("[v0] Ticketing rules saved successfully");
+        }
+      }
+
       // Show success message
       Swal.fire({
         icon: "success",

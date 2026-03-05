@@ -219,4 +219,36 @@ export const tripsApi = {
       throw error
     }
   },
+
+  /**
+   * Update ticketing rules for a trip
+   * @param {string} tripId - Trip ID
+   * @param {Array} payload - Array of ticketing rules with ruleType and rule ID
+   */
+  updateTicketingRules: async (tripId, payload) => {
+    try {
+      if (!tripId || tripId === "undefined") {
+        throw new Error("Invalid trip ID")
+      }
+
+      console.log("[v0] Updating ticketing rules for trip:", tripId, "Payload:", payload)
+
+      const response = await apiFetch(`${BASE_URL}/${tripId}/ticketing-rules`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to update ticketing rules")
+      }
+
+      const data = await response.json()
+      console.log("[v0] Ticketing rules updated successfully:", data)
+      return data
+    } catch (error) {
+      console.error("[v0] Update Ticketing Rules Error:", error.message)
+      throw error
+    }
+  },
 }
