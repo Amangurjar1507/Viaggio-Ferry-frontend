@@ -101,7 +101,7 @@ export default function TripsListTable() {
                           <td>{t.status}</td>
                           <td className="action-buttons">
                             <Can action="update" path="/company/fleet-management/trips">
-                              <button className="btn btn-sm btn-outline-primary me-1"><i className="bi bi-pencil" /></button>
+                              <Link to={`/company/ship-trip/edit-trip/${t._id}`} className="btn btn-sm btn-outline-primary me-1"><i className="bi bi-pencil" /></Link>
                             </Can>
                             <Can action="delete" path="/company/fleet-management/trips">
                               <button className="btn btn-sm btn-outline-danger"><i className="bi bi-trash" /></button>
