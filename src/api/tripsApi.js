@@ -217,6 +217,42 @@ export const tripsApi = {
   },
 
   /**
+   * Update availability for a trip
+   * @param {string} tripId - Trip ID
+   * @param {string} availabilityId - Availability ID
+   * @param {Object} payload - Availability data with availabilityTypes
+   */
+  updateAvailability: async (tripId, availabilityId, payload) => {
+    try {
+      if (!tripId || tripId === "undefined") {
+        throw new Error("Invalid trip ID")
+      }
+      if (!availabilityId || availabilityId === "undefined") {
+        throw new Error("Invalid availability ID")
+      }
+
+      console.log("[v0] Updating availability for trip ID:", tripId, "availability ID:", availabilityId, "Payload:", payload)
+
+      const response = await apiFetch(`${BASE_URL}/${tripId}/availabilities/${availabilityId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to update availability")
+      }
+
+      const data = await response.json()
+      console.log("[v0] Availability updated successfully:", data)
+      return data
+    } catch (error) {
+      console.error("[v0] Update Availability Error:", error.message)
+      throw error
+    }
+  },
+
+  /**
    * Create agent allocations for trip availability
    * @param {string} tripId - Trip ID
    * @param {string} availabilityId - Availability ID
