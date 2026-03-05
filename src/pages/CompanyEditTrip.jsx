@@ -767,6 +767,13 @@ export default function CompanyEditTrip() {
 
   return (
     <>
+      <style>{`
+        .hidden { display: none !important; }
+        .capacity-grid { display: grid; grid-template-columns: 1.5fr 1fr auto; gap: 1rem; }
+        @media (max-width: 767px) { .capacity-grid { grid-template-columns: 1fr; } }
+        .allocation-section { border: 1px solid var(--text-border); border-radius: .5rem; padding: 1rem; margin-bottom: 1rem; }
+        .agent-block { border: 1px solid var(--text-border); border-radius: .5rem; padding: 1rem; margin-bottom: 1rem; }
+      `}</style>
       <Header />
       <div className="d-flex">
         <Sidebar />
