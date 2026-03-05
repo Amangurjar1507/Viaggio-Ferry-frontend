@@ -645,11 +645,12 @@ export default function CompanyEditTrip() {
                           value={form.code}
                           onChange={onFormChange}
                           placeholder="e.g., DXB-MSC-001"
+                          disabled
                         />
                       </div>
                       <div className="col-md-6">
                         <label>Vessel *</label>
-                        <select className="form-select" name="vessel" value={form.vessel} onChange={onFormChange}>
+                        <select className="form-select" name="vessel" value={form.vessel} onChange={onFormChange} disabled>
                           <option value="">Select Vessel</option>
                           {ships.map((s) => (
                             <option key={s._id} value={s._id}>
@@ -663,7 +664,7 @@ export default function CompanyEditTrip() {
                     <div className="row mt-3">
                       <div className="col-md-6">
                         <label>Departure Port *</label>
-                        <select className="form-select" name="departurePort" value={form.departurePort} onChange={onFormChange}>
+                        <select className="form-select" name="departurePort" value={form.departurePort} onChange={onFormChange} disabled>
                           <option value="">Select Port</option>
                           {ports.map((p) => (
                             <option key={p._id} value={p._id}>
@@ -674,7 +675,7 @@ export default function CompanyEditTrip() {
                       </div>
                       <div className="col-md-6">
                         <label>Arrival Port *</label>
-                        <select className="form-select" name="arrivalPort" value={form.arrivalPort} onChange={onFormChange}>
+                        <select className="form-select" name="arrivalPort" value={form.arrivalPort} onChange={onFormChange} disabled>
                           <option value="">Select Port</option>
                           {ports.map((p) => (
                             <option key={p._id} value={p._id}>
@@ -694,6 +695,7 @@ export default function CompanyEditTrip() {
                           name="departureAt"
                           value={form.departureAt}
                           onChange={onFormChange}
+                          disabled
                         />
                       </div>
                       <div className="col-md-6">
@@ -704,6 +706,7 @@ export default function CompanyEditTrip() {
                           name="arrivalAt"
                           value={form.arrivalAt}
                           onChange={onFormChange}
+                          disabled
                         />
                       </div>
                     </div>
@@ -717,6 +720,7 @@ export default function CompanyEditTrip() {
                           name="bookingOpen"
                           value={form.bookingOpen}
                           onChange={onFormChange}
+                          disabled
                         />
                       </div>
                       <div className="col-md-6">
@@ -727,6 +731,7 @@ export default function CompanyEditTrip() {
                           name="bookingClose"
                           value={form.bookingClose}
                           onChange={onFormChange}
+                          disabled
                         />
                       </div>
                     </div>
@@ -740,6 +745,7 @@ export default function CompanyEditTrip() {
                           name="checkinOpen"
                           value={form.checkinOpen}
                           onChange={onFormChange}
+                          disabled
                         />
                       </div>
                       <div className="col-md-6">
@@ -750,6 +756,7 @@ export default function CompanyEditTrip() {
                           name="checkinClose"
                           value={form.checkinClose}
                           onChange={onFormChange}
+                          disabled
                         />
                       </div>
                     </div>
@@ -763,6 +770,7 @@ export default function CompanyEditTrip() {
                           name="boardingClose"
                           value={form.boardingClose}
                           onChange={onFormChange}
+                          disabled
                         />
                       </div>
                       <div className="col-md-6">
@@ -815,6 +823,7 @@ export default function CompanyEditTrip() {
                                 className="form-select"
                                 value={p.cabin}
                                 onChange={(e) => updatePassenger(p.id, "cabin", e.target.value)}
+                                disabled={p.cabin !== ""}
                               >
                                 <option value="">Select Cabin</option>
                                 {selectedTripCapacity.passenger.map((cab) => (
@@ -831,16 +840,19 @@ export default function CompanyEditTrip() {
                                 placeholder="Seats"
                                 value={p.seats}
                                 onChange={(e) => updatePassenger(p.id, "seats", e.target.value)}
+                                disabled={p.cabin !== ""}
                               />
                             </div>
                             <div className="col-md-4">
-                              <button
-                                type="button"
-                                className="btn btn-danger w-100"
-                                onClick={() => removePassenger(p.id)}
-                              >
-                                Remove
-                              </button>
+                              {p.cabin && (
+                                <button
+                                  type="button"
+                                  className="btn btn-danger w-100"
+                                  onClick={() => removePassenger(p.id)}
+                                >
+                                  Remove
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -856,6 +868,7 @@ export default function CompanyEditTrip() {
                                 className="form-select"
                                 value={c.type}
                                 onChange={(e) => updateCargo(c.id, "type", e.target.value)}
+                                disabled={c.type !== ""}
                               >
                                 <option value="">Select Hold</option>
                                 {selectedTripCapacity.cargo.map((cab) => (
@@ -872,16 +885,19 @@ export default function CompanyEditTrip() {
                                 placeholder="Spots"
                                 value={c.spots}
                                 onChange={(e) => updateCargo(c.id, "spots", e.target.value)}
+                                disabled={c.type !== ""}
                               />
                             </div>
                             <div className="col-md-4">
-                              <button
-                                type="button"
-                                className="btn btn-danger w-100"
-                                onClick={() => removeCargo(c.id)}
-                              >
-                                Remove
-                              </button>
+                              {c.type && (
+                                <button
+                                  type="button"
+                                  className="btn btn-danger w-100"
+                                  onClick={() => removeCargo(c.id)}
+                                >
+                                  Remove
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -897,6 +913,7 @@ export default function CompanyEditTrip() {
                                 className="form-select"
                                 value={v.type}
                                 onChange={(e) => updateVehicle(v.id, "type", e.target.value)}
+                                disabled={v.type !== ""}
                               >
                                 <option value="">Select Vehicle Type</option>
                                 {selectedTripCapacity.vehicle.map((cab) => (
@@ -913,16 +930,19 @@ export default function CompanyEditTrip() {
                                 placeholder="Spots"
                                 value={v.spots}
                                 onChange={(e) => updateVehicle(v.id, "spots", e.target.value)}
+                                disabled={v.type !== ""}
                               />
                             </div>
                             <div className="col-md-4">
-                              <button
-                                type="button"
-                                className="btn btn-danger w-100"
-                                onClick={() => removeVehicle(v.id)}
-                              >
-                                Remove
-                              </button>
+                              {v.type && (
+                                <button
+                                  type="button"
+                                  className="btn btn-danger w-100"
+                                  onClick={() => removeVehicle(v.id)}
+                                >
+                                  Remove
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}
