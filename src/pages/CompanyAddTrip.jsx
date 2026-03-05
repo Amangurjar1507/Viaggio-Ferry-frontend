@@ -1210,11 +1210,23 @@ export default function CompanyAddTrip() {
 
                             <select className="form-select" name="rulename" value={rule.ruleName} onChange={(e) => updateTripRule(rule.id, "ruleName", e.target.value)}>
                               <option value="">Select Rule</option>
-                              {ticketingRules.map((ticketRule) => (
-                                <option key={ticketRule._id} value={ticketRule.ruleName}>
-                                  {ticketRule.ruleName} ({ticketRule.ruleType})
-                                </option>
-                              ))}
+                              {ticketingRules
+                                .filter((ticketRule) => {
+                                  // Map rule type to API format
+                                  const ruleTypeMap = {
+                                    "Void": "VOID",
+                                    "Refund": "REFUND",
+                                    "Reissue": "REISSUE"
+                                  };
+                                  const selectedType = ruleTypeMap[rule.ruleType];
+                                  // Only show rules that match the current line's selected type
+                                  return ticketRule.ruleType === selectedType;
+                                })
+                                .map((ticketRule) => (
+                                  <option key={ticketRule._id} value={ticketRule.ruleName}>
+                                    {ticketRule.ruleName} ({ticketRule.ruleType})
+                                  </option>
+                                ))}
                             </select>
 
                             <button type="button" className="btn btn-sm btn-danger remove-trip-rule" onClick={() => removeTripRule(rule.id)}>Remove</button>
