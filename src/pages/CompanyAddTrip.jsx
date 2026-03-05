@@ -83,7 +83,7 @@ export default function CompanyAddTrip() {
 
   // Ticketing rules
   const [tripRules, setTripRules] = useState([
-    { id: makeId("r_"), trip: "", ruleType: "Void", ruleName: "" }
+    { id: makeId("r_"), trip: "", ruleType: "Refund", ruleName: "" }
   ]);
 
   // Fetch ships and ports on mount
@@ -274,9 +274,33 @@ export default function CompanyAddTrip() {
   };
 
   // Trip rules handlers
-  const addTripRule = () => setTripRules((r) => [...r, { id: makeId("r_"), ruleType: "Void", ruleName: "" }]);
+  const addTripRule = () => setTripRules((r) => [...r, { id: makeId("r_"), ruleType: "Refund", ruleName: "" }]);
   const removeTripRule = (id) => setTripRules((r) => r.filter((x) => x.id !== id));
   const updateTripRule = (id, key, value) => setTripRules((r) => r.map((x) => (x.id === id ? { ...x, [key]: value } : x)));
+
+  const handleRuleTypeChange = async (ruleType) => {
+    try {
+      console.log("[v0] Fetching rules for type:", ruleType);
+      
+      // Map display values to API values
+      const ruleTypeMap = {
+        "Void": "VOID",
+        "Refund": "REFUND",
+        "Reissue": "REISSUE"
+      };
+      
+      const apiRuleType = ruleTypeMap[ruleType] || ruleType;
+      
+      const response = await ticketingRuleApi.getTicketingRules(1, 100, { ruleType: apiRuleType });
+      const rulesList = response?.data || [];
+      
+      console.log("[v0] Rules fetched for type:", apiRuleType, "Rules:", rulesList);
+      
+      setTicketingRules(rulesList);
+    } catch (error) {
+      console.error("[v0] Error fetching rules for type:", error);
+    }
+  };
 
   // Save handlers (currently mock)
   const onSaveTrip = async (e) => {
@@ -1077,11 +1101,14 @@ export default function CompanyAddTrip() {
                       <div id="trip-rules-container">
                         {tripRules.map((rule) => (
                           <div className="capacity-grid align-items-center mb-2" key={rule.id}>
-                            <select className="form-select" value={rule.ruleType} onChange={(e) => updateTripRule(rule.id, "ruleType", e.target.value)}>
-                              <option>Void</option>
-                              <option>Refund</option>
-                              <option>Reissue</option>
-                              <option>No Show</option>
+                            <select className="form-select" value={rule.ruleType} onChange={(e) => {
+                              updateTripRule(rule.id, "ruleType", e.target.value);
+                              handleRuleTypeChange(e.target.value);
+                            }}>
+                              <option value="">Select Type</option>
+                              <option value="Void">Void</option>
+                              <option value="Refund">Refund</option>
+                              <option value="Reissue">Reissue</option>
                             </select>
 
                             <select className="form-select" name="rulename" value={rule.ruleName} onChange={(e) => updateTripRule(rule.id, "ruleName", e.target.value)}>
