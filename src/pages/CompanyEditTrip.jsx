@@ -889,7 +889,7 @@ export default function CompanyEditTrip() {
                               />
                             </div>
                             <div className="col-md-4">
-                              {c.type && (
+                              {!c.type && (
                                 <button
                                   type="button"
                                   className="btn btn-danger w-100"
@@ -934,7 +934,7 @@ export default function CompanyEditTrip() {
                               />
                             </div>
                             <div className="col-md-4">
-                              {v.type && (
+                              {!v.type && (
                                 <button
                                   type="button"
                                   className="btn btn-danger w-100"
