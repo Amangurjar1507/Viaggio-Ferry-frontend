@@ -71,6 +71,7 @@ export default function CompanyAddTrip() {
     {
       id: makeId("a_"),
       trip: "",
+      agentId: "",
       agentName: "Agent Alpha",
       passengerLines: [{ id: makeId("ap_"), select: "", qty: "" }],
       cargoLines: [{ id: makeId("ac_"), select: "", qty: "" }],
@@ -228,6 +229,7 @@ export default function CompanyAddTrip() {
       ...a,
       {
         id: makeId("a_"),
+        agentId: "",
         agentName: "",
         passengerLines: [{ id: makeId("ap_"), select: "", qty: "" }],
         cargoLines: [{ id: makeId("ac_"), select: "", qty: "" }],
@@ -924,7 +926,14 @@ export default function CompanyAddTrip() {
                                 <button type="button" className="btn btn-sm btn-danger remove-agent" onClick={() => removeAgent(agent.id)}>Remove Agent</button>
                               </div>
 
-                              <select className="form-select mb-3" value={agent.agentName} onChange={(e) => setAgents((a) => a.map((ag) => (ag.id === agent.id ? { ...ag, agentName: e.target.value } : ag)))}>
+                              <select className="form-select mb-3" value={agent.agentName} onChange={(e) => {
+                                const selectedPartner = partners.find(p => p.name === e.target.value);
+                                setAgents((a) => a.map((ag) => 
+                                  ag.id === agent.id 
+                                    ? { ...ag, agentName: e.target.value, agentId: selectedPartner?._id || "" } 
+                                    : ag
+                                ));
+                              }}>
                                 <option value="">-- Select a Partner --</option>
                                 {partners.map((partner) => (
                                   <option key={partner._id} value={partner.name}>
