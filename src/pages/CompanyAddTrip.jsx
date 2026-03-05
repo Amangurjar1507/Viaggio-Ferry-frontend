@@ -650,6 +650,75 @@ export default function CompanyAddTrip() {
     }
   };
 
+  const onSaveTicketingRules = async () => {
+    try {
+      // Validate that a trip is selected
+      if (!form.trip) {
+        Swal.fire({
+          icon: "warning",
+          title: "Validation Error",
+          text: "Please select a trip before saving ticketing rules"
+        });
+        return;
+      }
+
+      // Validate that at least one rule has both type and name selected
+      const rulesWithValidSelection = tripRules.filter(rule => rule.ruleName && rule.ruleType);
+      
+      if (rulesWithValidSelection.length === 0) {
+        Swal.fire({
+          icon: "warning",
+          title: "Validation Error",
+          text: "Please select at least one ticketing rule with both type and name"
+        });
+        return;
+      }
+
+      // Show loading
+      Swal.fire({
+        title: "Saving Ticketing Rules",
+        text: "Please wait...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Build the payload matching the API format
+      const ticketingRulesPayload = {
+        ticketingRules: rulesWithValidSelection.map(rule => {
+          const selectedRule = ticketingRules.find(tr => tr.ruleName === rule.ruleName);
+          return {
+            ruleType: rule.ruleType === "Void" ? "VOID" : rule.ruleType === "Refund" ? "REFUND" : "REISSUE",
+            rule: selectedRule?._id || ""
+          };
+        })
+      };
+
+      console.log("[v0] Saving ticketing rules with payload:", ticketingRulesPayload);
+
+      // Call the API
+      const response = await tripsApi.updateTicketingRules(form.trip, ticketingRulesPayload);
+
+      console.log("[v0] Ticketing rules saved successfully:", response);
+
+      // Show success message
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Ticketing rules saved successfully!",
+        confirmButtonText: "OK"
+      });
+    } catch (error) {
+      console.error("[v0] Error saving ticketing rules:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message || "Failed to save ticketing rules. Please try again."
+      });
+    }
+  };
+
   // JSX: keep the same classes as HTML (converted to className)
   return (
     <div className="main-wrapper">
@@ -1153,7 +1222,7 @@ export default function CompanyAddTrip() {
                       <button type="button" id="addTripRuleLine" className="btn btn-outline-secondary btn-sm mt-2" onClick={addTripRule}>Add Line</button>
 
                       <div className="d-flex justify-content-end mt-3">
-                        <button type="button" className="btn btn-success" onClick={onSaveTrip}>Save Trip</button>
+                        <button type="button" className="btn btn-success" onClick={onSaveTicketingRules}>Save Rules</button>
                       </div>
                     </div>
                   </div>
