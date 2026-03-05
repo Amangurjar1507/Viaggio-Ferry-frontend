@@ -360,11 +360,7 @@ export default function CompanyEditTrip() {
   // Fetch agent allocations for selected availability
   const fetchAgentAllocations = async (availabilityId) => {
     if (!availabilityId) {
-      Swal.fire({
-        icon: "warning",
-        title: "Selection Required",
-        text: "Please select an availability first"
-      });
+      setAgentAllocations([]);
       return;
     }
 
@@ -386,6 +382,13 @@ export default function CompanyEditTrip() {
       setLoadingAllocations(false);
     }
   };
+
+  // Auto-load allocations when availability is selected
+  useEffect(() => {
+    if (selectedAvailabilityId) {
+      fetchAgentAllocations(selectedAvailabilityId);
+    }
+  }, [selectedAvailabilityId]);
 
   // Save handlers
   const onSaveTrip = async (e) => {
@@ -1006,7 +1009,7 @@ export default function CompanyEditTrip() {
                       <div>
                         <div className="row mb-3">
                           <div className="col-md-6">
-                            <label className="form-label">Select Availability</label>
+                            <label className="form-label">Select Availability for Allocation</label>
                             <select 
                               className="form-select" 
                               value={selectedAvailabilityId} 
@@ -1021,82 +1024,92 @@ export default function CompanyEditTrip() {
                                 </option>
                               ))}
                             </select>
-                          </div>
-                          <div className="col-md-6 d-flex align-items-end">
-                            <button 
-                              type="button" 
-                              className="btn btn-primary"
-                              onClick={() => fetchAgentAllocations(selectedAvailabilityId)}
-                              disabled={!selectedAvailabilityId || loadingAllocations}
-                            >
-                              {loadingAllocations ? "Loading..." : "Load Allocations"}
-                            </button>
+                            {loadingAllocations && <small className="text-muted">Loading agents...</small>}
                           </div>
                         </div>
 
-                        {agentAllocations.length > 0 ? (
-                          <div id="agent-allocations-container">
-                            {agentAllocations.map((allocation) => (
-                              <div key={allocation._id} className="agent-block mb-4" style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '5px' }}>
+                        <div id="agent-allocation-container">
+                          {selectedAvailabilityId && agentAllocations.length > 0 ? (
+                            agentAllocations.map((allocation) => (
+                              <div className="agent-block" key={allocation._id}>
                                 <div className="d-flex justify-content-between align-items-center mb-3">
-                                  <h6 className="mb-0">Agent: <strong>{allocation.agent?.name || 'Unknown'}</strong></h6>
-                                  <small className="text-muted">ID: {allocation.agent?._id}</small>
+                                  <h6>{allocation.agent?.name || 'Agent Details'}</h6>
                                 </div>
 
-                                {allocation.allocations && allocation.allocations.length > 0 ? (
-                                  <>
-                                    {/* Passenger Allocations */}
-                                    {allocation.allocations.find(a => a.type === 'passenger') && (
-                                      <div className="allocation-section mb-3">
-                                        <h6 style={{ color: '#0c5fbf', marginBottom: '10px' }}>Passenger Allocations</h6>
-                                        {allocation.allocations.find(a => a.type === 'passenger').cabins?.map((cabin, idx) => (
-                                          <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #eee' }}>
-                                            <div><strong>Cabin ID:</strong> {cabin.cabin}</div>
-                                            <div><strong>Allocated Seats:</strong> {cabin.allocatedSeats}</div>
+                                {/* Passenger Allocation */}
+                                {allocation.allocations && allocation.allocations.find(a => a.type === 'passenger') && (
+                                  <div className="allocation-section">
+                                    <h6>Passenger Allocation</h6>
+                                    <div className="passenger-lines">
+                                      {allocation.allocations.find(a => a.type === 'passenger').cabins?.map((cabin, idx) => (
+                                        <div className="mb-3" key={idx}>
+                                          <div className="capacity-grid align-items-center">
+                                            <div className="form-control" style={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                                              {cabin.cabin}
+                                            </div>
+                                            <div className="form-control" style={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                                              {cabin.allocatedSeats}
+                                            </div>
                                           </div>
-                                        ))}
-                                      </div>
-                                    )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
 
-                                    {/* Cargo Allocations */}
-                                    {allocation.allocations.find(a => a.type === 'cargo') && (
-                                      <div className="allocation-section mb-3">
-                                        <h6 style={{ color: '#0c5fbf', marginBottom: '10px' }}>Cargo Allocations</h6>
-                                        {allocation.allocations.find(a => a.type === 'cargo').cabins?.map((cabin, idx) => (
-                                          <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #eee' }}>
-                                            <div><strong>Hold ID:</strong> {cabin.cabin}</div>
-                                            <div><strong>Allocated Spots:</strong> {cabin.allocatedSeats}</div>
+                                {/* Cargo Allocation */}
+                                {allocation.allocations && allocation.allocations.find(a => a.type === 'cargo') && (
+                                  <div className="allocation-section">
+                                    <h6>Cargo Allocation</h6>
+                                    <div className="cargo-lines">
+                                      {allocation.allocations.find(a => a.type === 'cargo').cabins?.map((cabin, idx) => (
+                                        <div className="mb-3" key={idx}>
+                                          <div className="capacity-grid align-items-center">
+                                            <div className="form-control" style={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                                              {cabin.cabin}
+                                            </div>
+                                            <div className="form-control" style={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                                              {cabin.allocatedSeats}
+                                            </div>
                                           </div>
-                                        ))}
-                                      </div>
-                                    )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
 
-                                    {/* Vehicle Allocations */}
-                                    {allocation.allocations.find(a => a.type === 'vehicle') && (
-                                      <div className="allocation-section">
-                                        <h6 style={{ color: '#0c5fbf', marginBottom: '10px' }}>Vehicle Allocations</h6>
-                                        {allocation.allocations.find(a => a.type === 'vehicle').cabins?.map((cabin, idx) => (
-                                          <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #eee' }}>
-                                            <div><strong>Vehicle Type ID:</strong> {cabin.cabin}</div>
-                                            <div><strong>Allocated Spots:</strong> {cabin.allocatedSeats}</div>
+                                {/* Vehicle Allocation */}
+                                {allocation.allocations && allocation.allocations.find(a => a.type === 'vehicle') && (
+                                  <div className="allocation-section">
+                                    <h6>Vehicle Allocation</h6>
+                                    <div className="vehicle-lines">
+                                      {allocation.allocations.find(a => a.type === 'vehicle').cabins?.map((cabin, idx) => (
+                                        <div className="mb-3" key={idx}>
+                                          <div className="capacity-grid align-items-center">
+                                            <div className="form-control" style={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                                              {cabin.cabin}
+                                            </div>
+                                            <div className="form-control" style={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                                              {cabin.allocatedSeats}
+                                            </div>
                                           </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </>
-                                ) : (
-                                  <p className="text-muted mb-0">No allocations for this agent</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
                                 )}
                               </div>
-                            ))}
-                          </div>
-                        ) : loadingAllocations ? (
-                          <div className="text-center py-4">
-                            <p className="text-muted">Loading allocations...</p>
-                          </div>
-                        ) : (
-                          <p className="text-muted">Select an availability and click "Load Allocations" to view agent allocations</p>
-                        )}
+                            ))
+                          ) : selectedAvailabilityId && !loadingAllocations ? (
+                            <p className="text-muted">No agent allocations found for this availability</p>
+                          ) : loadingAllocations ? (
+                            <div className="text-center py-4">
+                              <p className="text-muted">Loading allocations...</p>
+                            </div>
+                          ) : (
+                            <p className="text-muted">Select an availability to view agent allocations</p>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
