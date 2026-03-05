@@ -183,4 +183,40 @@ export const tripsApi = {
       throw error
     }
   },
+
+  /**
+   * Create agent allocations for trip availability
+   * @param {string} tripId - Trip ID
+   * @param {string} availabilityId - Availability ID
+   * @param {Array} payload - Array of agent allocations
+   */
+  createAgentAllocations: async (tripId, availabilityId, payload) => {
+    try {
+      if (!tripId || tripId === "undefined") {
+        throw new Error("Invalid trip ID")
+      }
+      if (!availabilityId || availabilityId === "undefined") {
+        throw new Error("Invalid availability ID")
+      }
+
+      console.log("[v0] Creating agent allocations for trip:", tripId, "availability:", availabilityId, "Payload:", payload)
+
+      const response = await apiFetch(`${BASE_URL}/${tripId}/availabilities/${availabilityId}/agent-allocations`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to create agent allocations")
+      }
+
+      const data = await response.json()
+      console.log("[v0] Agent allocations created successfully:", data)
+      return data
+    } catch (error) {
+      console.error("[v0] Create Agent Allocations Error:", error.message)
+      throw error
+    }
+  },
 }

@@ -31,6 +31,7 @@ export default function CompanyAddTrip() {
     cargo: [],
     vehicle: []
   });
+  const [selectedAvailabilityId, setSelectedAvailabilityId] = useState("");
 
   // Tab states (main tabs and inner availability tabs)
   const [mainTab, setMainTab] = useState("details"); // details | availability | ticketing
@@ -163,6 +164,13 @@ export default function CompanyAddTrip() {
         const availabilityResponse = await tripsApi.getAvailabilities(tripId);
         console.log("[v0] Availabilities fetched:", availabilityResponse);
         
+        // Store the availability ID (assuming it's returned in the response)
+        if (availabilityResponse?._id) {
+          setSelectedAvailabilityId(availabilityResponse._id);
+        } else if (availabilityResponse?.data?._id) {
+          setSelectedAvailabilityId(availabilityResponse.data._id);
+        }
+        
         // Check if availabilityTypes is directly in response or nested under data
         const availTypes = availabilityResponse?.availabilityTypes || availabilityResponse?.data?.availabilityTypes || [];
         
@@ -185,6 +193,7 @@ export default function CompanyAddTrip() {
       } catch (error) {
         console.error("[v0] Error fetching availabilities:", error);
         setSelectedTripAvailability({ passenger: [], cargo: [], vehicle: [] });
+        setSelectedAvailabilityId("");
       }
     } else {
       setSelectedTripCapacity({ passenger: [], cargo: [], vehicle: [] });
@@ -448,6 +457,135 @@ export default function CompanyAddTrip() {
         icon: "error",
         title: "Error",
         text: error.message || "Failed to save availability. Please try again."
+      });
+    }
+  };
+
+  const onSaveAgentAllocations = async () => {
+    try {
+      // Validate that a trip is selected
+      if (!form.trip) {
+        Swal.fire({
+          icon: "warning",
+          title: "Validation Error",
+          text: "Please select a trip before saving agent allocations"
+        });
+        return;
+      }
+
+      // Validate that availability ID exists
+      if (!selectedAvailabilityId) {
+        Swal.fire({
+          icon: "warning",
+          title: "Validation Error",
+          text: "No availability found for this trip. Please ensure availability data is loaded."
+        });
+        return;
+      }
+
+      // Validate that at least one agent has allocations
+      if (agents.every(a => a.passengerLines.every(p => !p.select) && a.cargoLines.every(c => !c.select) && a.vehicleLines.every(v => !v.select))) {
+        Swal.fire({
+          icon: "warning",
+          title: "Validation Error",
+          text: "Please allocate at least one item to an agent"
+        });
+        return;
+      }
+
+      // Show loading
+      Swal.fire({
+        title: "Saving Agent Allocations",
+        text: "Please wait...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Build the payload matching the API format
+      const payload = agents
+        .filter(agent => {
+          // Filter agents that have at least one allocation
+          const hasPassenger = agent.passengerLines.some(p => p.select && p.qty);
+          const hasCargo = agent.cargoLines.some(c => c.select && c.qty);
+          const hasVehicle = agent.vehicleLines.some(v => v.select && v.qty);
+          return hasPassenger || hasCargo || hasVehicle;
+        })
+        .map(agent => {
+          const allocations = [];
+
+          // Add passenger allocations
+          const passengerAllocs = agent.passengerLines
+            .filter(p => p.select && p.qty)
+            .map(p => ({
+              cabin: p.select,
+              allocatedSeats: parseInt(p.qty) || 0
+            }));
+
+          if (passengerAllocs.length > 0) {
+            allocations.push({
+              type: "passenger",
+              cabins: passengerAllocs
+            });
+          }
+
+          // Add cargo allocations
+          const cargoAllocs = agent.cargoLines
+            .filter(c => c.select && c.qty)
+            .map(c => ({
+              cabin: c.select,
+              allocatedSeats: parseInt(c.qty) || 0
+            }));
+
+          if (cargoAllocs.length > 0) {
+            allocations.push({
+              type: "cargo",
+              cabins: cargoAllocs
+            });
+          }
+
+          // Add vehicle allocations
+          const vehicleAllocs = agent.vehicleLines
+            .filter(v => v.select && v.qty)
+            .map(v => ({
+              cabin: v.select,
+              allocatedSeats: parseInt(v.qty) || 0
+            }));
+
+          if (vehicleAllocs.length > 0) {
+            allocations.push({
+              type: "vehicle",
+              cabins: vehicleAllocs
+            });
+          }
+
+          return {
+            agent: agent.agentId,
+            allocations
+          };
+        });
+
+      console.log("[v0] Saving agent allocations with payload:", payload);
+
+      // Call the API
+      const response = await tripsApi.createAgentAllocations(form.trip, selectedAvailabilityId, payload);
+
+      console.log("[v0] Agent allocations saved successfully:", response);
+
+      // Show success message
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Agent allocations saved successfully!",
+        confirmButtonText: "OK"
+      });
+    } catch (error) {
+      console.error("[v0] Error saving agent allocations:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message || "Failed to save agent allocations. Please try again."
       });
     }
   };
@@ -894,7 +1032,7 @@ export default function CompanyAddTrip() {
                         <button type="button" id="addAgentLine" className="btn btn-sm btn-outline-secondary" onClick={addAgent}>Add Another Agent</button>
 
                         <div className="text-end mt-3">
-                          <button type="button" className="btn btn-success" onClick={onSaveAvailability}>Save Allocation</button>
+                          <button type="button" className="btn btn-success" onClick={onSaveAgentAllocations}>Save Allocation</button>
                         </div>
                       </div>
                     </div>
