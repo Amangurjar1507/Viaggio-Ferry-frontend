@@ -844,7 +844,7 @@ export default function CompanyEditTrip() {
                               />
                             </div>
                             <div className="col-md-4">
-                              {p.cabin && (
+                              {!p.cabin && (
                                 <button
                                   type="button"
                                   className="btn btn-danger w-100"
